@@ -4,7 +4,9 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
+import com.mojang.authlib.minecraft.InsecurePublicKeyException;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
+import com.mojang.authlib.properties.Property;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -78,5 +80,10 @@ public class LegacyMinecraftSessionService extends HttpMinecraftSessionService {
     @Override
     public LegacyAuthenticationService getAuthenticationService() {
         return (LegacyAuthenticationService) super.getAuthenticationService();
+    }
+
+    @Override
+    public String getSecurePropertyValue(final Property property) throws InsecurePublicKeyException {
+        return property.getValue();
     }
 }

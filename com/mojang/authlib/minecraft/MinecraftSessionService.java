@@ -3,6 +3,7 @@ package com.mojang.authlib.minecraft;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
+import com.mojang.authlib.properties.Property;
 
 import java.net.InetAddress;
 import java.util.Map;
@@ -60,4 +61,13 @@ public interface MinecraftSessionService {
      * @return Filled profile for the previous user.
      */
     GameProfile fillProfileProperties(GameProfile profile, boolean requireSecure);
+
+    /**
+     * Verifies the signature and returns the value of a {@link com.mojang.authlib.properties.Property}.
+     *
+     * @param property Property to return the value of.
+     * @return String value
+     * @throws com.mojang.authlib.minecraft.InsecurePublicKeyException If data is insecure or missing
+     */
+    String getSecurePropertyValue(Property property) throws InsecurePublicKeyException;
 }

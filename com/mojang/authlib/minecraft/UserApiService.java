@@ -1,5 +1,8 @@
 package com.mojang.authlib.minecraft;
 
+import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
+
+import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -55,6 +58,12 @@ public interface UserApiService {
         public TelemetrySession newTelemetrySession(final Executor executor) {
             return TelemetrySession.DISABLED;
         }
+
+        @Override
+        @Nullable
+        public KeyPairResponse getKeyPair() {
+            return null;
+        }
     };
 
     UserProperties properties();
@@ -80,4 +89,7 @@ public interface UserApiService {
      * @param executor - executor used for sending operations
      */
     TelemetrySession newTelemetrySession(Executor executor);
+
+    @Nullable
+    KeyPairResponse getKeyPair();
 }

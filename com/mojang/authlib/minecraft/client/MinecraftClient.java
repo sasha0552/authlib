@@ -48,6 +48,13 @@ public class MinecraftClient {
         return readInputStream(url, responseClass, connection);
     }
 
+    public <T> T post(final URL url, final Class<T> responseClass) {
+        Validate.notNull(url);
+        Validate.notNull(responseClass);
+        final HttpURLConnection connection = postInternal(url, new byte[0]);
+        return readInputStream(url, responseClass, connection);
+    }
+
     public <T> T post(final URL url, final Object body, final Class<T> responseClass) {
         Validate.notNull(url);
         Validate.notNull(body);

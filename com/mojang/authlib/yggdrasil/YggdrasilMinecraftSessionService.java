@@ -13,6 +13,7 @@ import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
+import com.mojang.authlib.minecraft.InsecurePublicKeyException;
 import com.mojang.authlib.minecraft.InsecureTextureException;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.properties.Property;
@@ -187,6 +188,21 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         return fillGameProfile(profile, true);
     }
 
+    @Override
+    public String getSecurePropertyValue(final Property property) throws InsecurePublicKeyException {
+        if (!property.hasSignature()) {
+            LOGGER.error("Signature is missing from Property {}", property.getName());
+            throw new InsecurePublicKeyException.MissingException();
+        }
+
+        if (!property.isSignatureValid(publicKey)) {
+            LOGGER.error("Property {} has been tampered with (signature invalid)", property.getName());
+            throw new InsecurePublicKeyException.InvalidException("Property has been tampered with (signature invalid)");
+        }
+
+        return property.getValue();
+    }
+
     protected GameProfile fillGameProfile(final GameProfile profile, final boolean requireSecure) {
         try {
             URL url = HttpAuthenticationService.constantURL(baseUrl + "profile/" + UUIDTypeAdapter.fromUUID(profile.getId()));
@@ -194,17 +210,18 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             final MinecraftProfilePropertiesResponse response = getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
 
             if (response == null) {
-                LOGGER.debug("Couldn't fetch profile properties for " + profile + " as the profile does not exist");
+                LOGGER.debug("Couldn't fetch profile properties for {} as the profile does not exist", profile);
                 return profile;
             } else {
                 final GameProfile result = new GameProfile(response.getId(), response.getName());
                 result.getProperties().putAll(response.getProperties());
                 profile.getProperties().putAll(response.getProperties());
-                LOGGER.debug("Successfully fetched profile properties for " + profile);
+
+                LOGGER.debug("Successfully fetched profile properties for {}", result);
                 return result;
             }
         } catch (final AuthenticationException e) {
-            LOGGER.warn("Couldn't look up profile properties for " + profile, e);
+            LOGGER.warn("Couldn't look up profile properties for {}", profile, e);
             return profile;
         }
     }
