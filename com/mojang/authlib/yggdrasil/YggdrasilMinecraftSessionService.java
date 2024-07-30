@@ -23,7 +23,6 @@ import com.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.util.UUIDTypeAdapter;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +31,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +54,6 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     private final URL joinUrl;
     private final URL checkUrl;
 
-    private final PublicKey publicKey;
     private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
     private final LoadingCache<GameProfile, GameProfile> insecureProfiles = CacheBuilder
         .newBuilder()
@@ -77,14 +72,6 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
         joinUrl = HttpAuthenticationService.constantURL(baseUrl + "join");
         checkUrl = HttpAuthenticationService.constantURL(baseUrl + "hasJoined");
-
-        try {
-            final X509EncodedKeySpec spec = new X509EncodedKeySpec(IOUtils.toByteArray(YggdrasilMinecraftSessionService.class.getResourceAsStream("/yggdrasil_session_pubkey.der")));
-            final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            publicKey = keyFactory.generatePublic(spec);
-        } catch (final Exception ignored) {
-            throw new Error("Missing/invalid yggdrasil public key!");
-        }
     }
 
     @Override
@@ -145,7 +132,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
                 throw new InsecureTextureException("Signature is missing from textures payload");
             }
 
-            if (!textureProperty.isSignatureValid(publicKey)) {
+            if (!getAuthenticationService().getServicesKey().validateProperty(textureProperty)) {
                 LOGGER.error("Textures payload has been tampered with (signature invalid)");
                 throw new InsecureTextureException("Textures payload has been tampered with (signature invalid)");
             }
@@ -195,7 +182,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             throw new InsecurePublicKeyException.MissingException();
         }
 
-        if (!property.isSignatureValid(publicKey)) {
+        if (!getAuthenticationService().getServicesKey().validateProperty(property)) {
             LOGGER.error("Property {} has been tampered with (signature invalid)", property.getName());
             throw new InsecurePublicKeyException.InvalidException("Property has been tampered with (signature invalid)");
         }
@@ -220,7 +207,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
                 LOGGER.debug("Successfully fetched profile properties for {}", result);
                 return result;
             }
-        } catch (final AuthenticationException e) {
+        } catch (final AuthenticationException | IllegalArgumentException e) {
             LOGGER.warn("Couldn't look up profile properties for {}", profile, e);
             return profile;
         }

@@ -1,5 +1,8 @@
 package com.mojang.authlib.properties;
 
+import com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo;
+
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -38,17 +41,17 @@ public class Property {
         return signature != null;
     }
 
+    /**
+     * @deprecated Use {@link YggdrasilServicesKeyInfo#validateProperty(Property)}
+     */
+    @Deprecated
     public boolean isSignatureValid(final PublicKey publicKey) {
         try {
             final Signature signature = Signature.getInstance("SHA1withRSA");
             signature.initVerify(publicKey);
-            signature.update(value.getBytes());
+            signature.update(value.getBytes(StandardCharsets.US_ASCII));
             return signature.verify(Base64.getDecoder().decode(this.signature));
-        } catch (final NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (final InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (final SignatureException e) {
+        } catch (final NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
             e.printStackTrace();
         }
         return false;

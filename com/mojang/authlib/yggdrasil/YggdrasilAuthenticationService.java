@@ -46,6 +46,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     private final String clientToken;
     private final Gson gson;
     private final Environment environment;
+    private final ServicesKeyInfo servicesKey = YggdrasilServicesKeyInfo.createFromResources();
 
     public YggdrasilAuthenticationService(final Proxy proxy) {
         this(proxy, determineEnvironment());
@@ -94,6 +95,10 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     @Override
     public GameProfileRepository createProfileRepository() {
         return new YggdrasilGameProfileRepository(this, environment);
+    }
+
+    public ServicesKeyInfo getServicesKey() {
+        return servicesKey;
     }
 
     protected <T extends Response> T makeRequest(final URL url, final Object input, final Class<T> classOfT) throws AuthenticationException {
