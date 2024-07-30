@@ -10,10 +10,14 @@ import com.mojang.authlib.yggdrasil.response.PrivilegesResponse;
 
 import javax.annotation.Nullable;
 import java.net.URL;
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
 public class YggdrasilSocialInteractionsService implements SocialInteractionsService {
+    private static final long BLOCKLIST_REQUEST_COOLDOWN_SECONDS = 120;
+    private static final UUID ZERO_UUID = new UUID(0, 0);
+
     private final URL routePrivileges;
     private final URL routeBlocklist;
 
@@ -22,6 +26,8 @@ public class YggdrasilSocialInteractionsService implements SocialInteractionsSer
     private boolean serversAllowed;
     private boolean realmsAllowed;
     private boolean chatAllowed;
+    @Nullable
+    private Instant nextAcceptableBlockRequest;
 
     @Nullable
     private Set<UUID> blockList;
@@ -51,6 +57,10 @@ public class YggdrasilSocialInteractionsService implements SocialInteractionsSer
 
     @Override
     public boolean isBlockedPlayer(final UUID playerID) {
+        if (playerID.equals(ZERO_UUID)) {
+            return false;
+        }
+
         if (blockList == null) {
             blockList = fetchBlockList();
             if (blockList == null) {
@@ -63,6 +73,10 @@ public class YggdrasilSocialInteractionsService implements SocialInteractionsSer
 
     @Nullable
     private Set<UUID> fetchBlockList() {
+        if (nextAcceptableBlockRequest != null && nextAcceptableBlockRequest.isAfter(Instant.now())) {
+            return null;
+        }
+        nextAcceptableBlockRequest = Instant.now().plusSeconds(BLOCKLIST_REQUEST_COOLDOWN_SECONDS);
         try {
             final BlockListResponse response = authenticationService.makeRequest(routeBlocklist, null, BlockListResponse.class, "Bearer " + accessToken);
             if (response == null) {
