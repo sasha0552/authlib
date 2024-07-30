@@ -5,39 +5,38 @@ import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.properties.Property;
 
+import javax.annotation.Nullable;
 import java.net.InetAddress;
 import java.util.Map;
+import java.util.UUID;
 
 public interface MinecraftSessionService {
     /**
      * Attempts to join the specified Minecraft server.
      * <p />
-     * The {@link com.mojang.authlib.GameProfile} used to join with may be partial, but the exact requirements will vary on
-     * authentication service. If this method returns without throwing an exception, the join was successful and a subsequent call to
-     * {@link #hasJoinedServer(GameProfile, String, InetAddress)} will return true.
+     * If this method returns without throwing an exception, the join was successful and a subsequent call to
+     * {@link #hasJoinedServer(String, String, InetAddress)} will return true.
      *
-     * @param profile Partial {@link com.mojang.authlib.GameProfile} to join as
-     * @param authenticationToken The {@link com.mojang.authlib.UserAuthentication#getAuthenticatedToken() authenticated token} of the user
+     * @param profileId The player profile ID to join as
+     * @param authenticationToken The authenticated token of the user
      * @param serverId The random ID of the server to join
      * @throws com.mojang.authlib.exceptions.AuthenticationUnavailableException Thrown when the servers return a malformed response, or are otherwise unavailable
      * @throws com.mojang.authlib.exceptions.InvalidCredentialsException Thrown when the specified authenticationToken is invalid
      * @throws com.mojang.authlib.exceptions.AuthenticationException Generic exception indicating that we could not authenticate the user
      */
-    void joinServer(GameProfile profile, String authenticationToken, String serverId) throws AuthenticationException;
+    void joinServer(UUID profileId, String authenticationToken, String serverId) throws AuthenticationException;
 
     /**
      * Checks if the specified user has joined a Minecraft server.
      * <p />
-     * The {@link com.mojang.authlib.GameProfile} used to join with may be partial, but the exact requirements will vary on
-     * authentication service.
      *
-     * @param user Partial {@link GameProfile} to check for
+     * @param profileName The player name to check for
      * @param serverId The random ID of the server to check for
      * @param address The address connected from
      * @throws com.mojang.authlib.exceptions.AuthenticationUnavailableException Thrown when the servers return a malformed response, or are otherwise unavailable
      * @return Full game profile if the user had joined, otherwise null
      */
-    GameProfile hasJoinedServer(GameProfile user, String serverId, InetAddress address) throws AuthenticationUnavailableException;
+    GameProfile hasJoinedServer(String profileName, String serverId, @Nullable InetAddress address) throws AuthenticationUnavailableException;
 
     /**
      * Gets a map of all known textures from a {@link com.mojang.authlib.GameProfile}.
@@ -52,15 +51,17 @@ public interface MinecraftSessionService {
     Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile, boolean requireSecure) throws InsecurePublicKeyException;
 
     /**
-     * Fills a profile with all known properties from the session service.
-     * <p />
+     * Fetches the profile information associated with the given ID from the session service.
+     * This will include all properties associated with the profile.
+     * <p/>
      * The profile must have an ID. If no information is found, nothing will be done.
      *
-     * @param profile Game profile to fill with properties.
-     * @param requireSecure If you require verifiable correct data.
-     * @return Filled profile for the previous user.
+     * @param profileId     The ID of the game profile to request.
+     * @param requireSecure If the profile property map should include verifiable signature information.
+     * @return Fetched profile for the requested user, or {@code null} if unsuccessful or the user did not exist.
      */
-    GameProfile fillProfileProperties(GameProfile profile, boolean requireSecure);
+    @Nullable
+    GameProfile fetchProfile(UUID profileId, boolean requireSecure);
 
     /**
      * Verifies the signature and returns the value of a {@link com.mojang.authlib.properties.Property}.

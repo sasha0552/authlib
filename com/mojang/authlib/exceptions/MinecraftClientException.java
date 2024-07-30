@@ -25,6 +25,9 @@ public class MinecraftClientException extends RuntimeException {
     }
 
     public AuthenticationException toAuthenticationException() {
+        if (type == ErrorType.SERVICE_UNAVAILABLE) {
+            return new AuthenticationUnavailableException();
+        }
         return new AuthenticationException(this);
     }
 }

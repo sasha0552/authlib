@@ -1,5 +1,6 @@
 package com.mojang.authlib.minecraft;
 
+import com.google.gson.annotations.SerializedName;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -18,7 +19,9 @@ public class MinecraftProfileTexture {
 
     public static final int PROFILE_TEXTURE_COUNT = Type.values().length;
 
+    @SerializedName("url")
     private final String url;
+    @SerializedName("metadata")
     private final Map<String, String> metadata;
 
     public MinecraftProfileTexture(final String url, final Map<String, String> metadata) {

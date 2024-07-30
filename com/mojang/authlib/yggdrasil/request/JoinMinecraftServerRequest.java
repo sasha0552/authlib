@@ -1,9 +1,15 @@
 package com.mojang.authlib.yggdrasil.request;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.UUID;
 
-public class JoinMinecraftServerRequest {
-    public String accessToken;
-    public UUID selectedProfile;
-    public String serverId;
+public record JoinMinecraftServerRequest(
+    @SerializedName("accessToken")
+    String accessToken,
+    @SerializedName("selectedProfile")
+    UUID selectedProfile,
+    @SerializedName("serverId")
+    String serverId
+) {
 }

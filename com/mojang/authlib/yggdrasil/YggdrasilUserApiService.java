@@ -1,5 +1,6 @@
 package com.mojang.authlib.yggdrasil;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.authlib.Environment;
 import com.mojang.authlib.HttpAuthenticationService;
@@ -14,15 +15,12 @@ import com.mojang.authlib.minecraft.report.AbuseReportLimits;
 import com.mojang.authlib.yggdrasil.request.AbuseReportRequest;
 import com.mojang.authlib.yggdrasil.response.BlockListResponse;
 import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
-import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.authlib.yggdrasil.response.UserAttributesResponse;
 
 import javax.annotation.Nullable;
 import java.net.Proxy;
 import java.net.URL;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -48,10 +46,10 @@ public class YggdrasilUserApiService implements UserApiService {
     public YggdrasilUserApiService(final String accessToken, final Proxy proxy, final Environment env) throws AuthenticationException {
         this.minecraftClient = new MinecraftClient(accessToken, proxy);
         environment = env;
-        routePrivileges = HttpAuthenticationService.constantURL(env.getServicesHost() + "/player/attributes");
-        routeBlocklist = HttpAuthenticationService.constantURL(env.getServicesHost() + "/privacy/blocklist");
-        routeKeyPair = HttpAuthenticationService.constantURL(env.getServicesHost() + "/player/certificates");
-        routeAbuseReport = HttpAuthenticationService.constantURL(env.getServicesHost() + "/player/report");
+        routePrivileges = HttpAuthenticationService.constantURL(env.servicesHost() + "/player/attributes");
+        routeBlocklist = HttpAuthenticationService.constantURL(env.servicesHost() + "/privacy/blocklist");
+        routeKeyPair = HttpAuthenticationService.constantURL(env.servicesHost() + "/player/certificates");
+        routeAbuseReport = HttpAuthenticationService.constantURL(env.servicesHost() + "/player/report");
         fetchProperties();
     }
 
@@ -112,7 +110,10 @@ public class YggdrasilUserApiService implements UserApiService {
         nextAcceptableBlockRequest = Instant.now().plusSeconds(BLOCKLIST_REQUEST_COOLDOWN_SECONDS);
         try {
             final BlockListResponse response = minecraftClient.get(routeBlocklist, BlockListResponse.class);
-            return response.getBlockedProfiles();
+            if (response == null) {
+                return Set.of();
+            }
+            return response.blockedProfiles();
         } catch (final MinecraftClientHttpException e) {
             //TODO: Look at the error type and response code. Retry if 5xx
             //TODO: Handle when status is 401 (Unathorized) -> Refresh token/login again.
@@ -128,30 +129,32 @@ public class YggdrasilUserApiService implements UserApiService {
         try {
             final UserAttributesResponse response = minecraftClient.get(routePrivileges, UserAttributesResponse.class);
             final ImmutableSet.Builder<UserFlag> flags = ImmutableSet.builder();
+            final ImmutableMap.Builder<String, BanDetails> bannedScopes = ImmutableMap.builder();
 
-            final UserAttributesResponse.Privileges privileges = response.getPrivileges();
-            if (privileges != null) {
-                addFlagIfUserHasPrivilege(privileges.getOnlineChat(), UserFlag.CHAT_ALLOWED, flags);
-                addFlagIfUserHasPrivilege(privileges.getMultiplayerServer(), UserFlag.SERVERS_ALLOWED, flags);
-                addFlagIfUserHasPrivilege(privileges.getMultiplayerRealms(), UserFlag.REALMS_ALLOWED, flags);
-                addFlagIfUserHasPrivilege(privileges.getTelemetry(), UserFlag.TELEMETRY_ENABLED, flags);
-                addFlagIfUserHasPrivilege(privileges.getOptionalTelemetry(), UserFlag.OPTIONAL_TELEMETRY_AVAILABLE, flags);
+            if (response != null) {
+                final UserAttributesResponse.Privileges privileges = response.privileges();
+                if (privileges != null) {
+                    addFlagIfUserHasPrivilege(privileges.getOnlineChat(), UserFlag.CHAT_ALLOWED, flags);
+                    addFlagIfUserHasPrivilege(privileges.getMultiplayerServer(), UserFlag.SERVERS_ALLOWED, flags);
+                    addFlagIfUserHasPrivilege(privileges.getMultiplayerRealms(), UserFlag.REALMS_ALLOWED, flags);
+                    addFlagIfUserHasPrivilege(privileges.getTelemetry(), UserFlag.TELEMETRY_ENABLED, flags);
+                    addFlagIfUserHasPrivilege(privileges.getOptionalTelemetry(), UserFlag.OPTIONAL_TELEMETRY_AVAILABLE, flags);
+                }
+
+                final UserAttributesResponse.ProfanityFilterPreferences profanityFilterPreferences = response.profanityFilterPreferences();
+                if (profanityFilterPreferences != null && profanityFilterPreferences.enabled()) {
+                    flags.add(UserFlag.PROFANITY_FILTER_ENABLED);
+                }
+
+                if (response.banStatus() != null) {
+                    response.banStatus().bannedScopes().forEach((scopeType, scope) -> {
+                        bannedScopes.put(scopeType, new BanDetails(scope.banId(), scope.expires(), scope.reason(), scope.reasonMessage()));
+                    });
+                }
             }
 
-            final UserAttributesResponse.ProfanityFilterPreferences profanityFilterPreferences = response.getProfanityFilterPreferences();
-            if (profanityFilterPreferences != null && profanityFilterPreferences.isEnabled()) {
-                flags.add(UserFlag.PROFANITY_FILTER_ENABLED);
-            }
-
-            final Map<String, BanDetails> bannedScopes = new HashMap<>();
-            if (response.getBanStatus() != null) {
-                response.getBanStatus().getBannedScopes().forEach((scopeType, scope) -> {
-                    bannedScopes.put(scopeType, new BanDetails(scope.getBanId(), scope.getExpires(), scope.getReason(), scope.getReasonMessage()));
-                });
-            }
-
-            properties = new UserProperties(flags.build(), bannedScopes);
-        } catch (MinecraftClientHttpException e) {
+            properties = new UserProperties(flags.build(), bannedScopes.build());
+        } catch (final MinecraftClientHttpException e) {
             //TODO: Handle when status is 401 (Unauthorized) -> Refresh token/login again.
             throw e.toAuthenticationException();
         } catch (final MinecraftClientException e) {
@@ -169,7 +172,7 @@ public class YggdrasilUserApiService implements UserApiService {
 
     @Override
     public void reportAbuse(final AbuseReportRequest request) {
-        minecraftClient.post(routeAbuseReport, request, Response.class);
+        minecraftClient.post(routeAbuseReport, request, Void.class);
     }
 
     @Override

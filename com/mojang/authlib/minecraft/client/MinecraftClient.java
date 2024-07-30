@@ -9,6 +9,7 @@ import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -30,24 +31,33 @@ public class MinecraftClient {
     public static final int CONNECT_TIMEOUT_MS = 5000;
     public static final int READ_TIMEOUT_MS = 5000;
 
+    @Nullable
     private final String accessToken;
     private final Proxy proxy;
     private final ObjectMapper objectMapper = ObjectMapper.create();
 
-    public MinecraftClient(final String accessToken, final Proxy proxy) {
-        this.accessToken = Validate.notNull(accessToken);
+    public MinecraftClient(@Nullable final String accessToken, final Proxy proxy) {
+        this.accessToken = accessToken;
         this.proxy = Validate.notNull(proxy);
     }
 
-    public <T> T get(final URL url, Class<T> responseClass) {
+    public static MinecraftClient unauthenticated(final Proxy proxy) {
+        return new MinecraftClient(null, proxy);
+    }
+
+    @Nullable
+    public <T> T get(final URL url, final Class<T> responseClass) {
         Validate.notNull(url);
         Validate.notNull(responseClass);
         final HttpURLConnection connection = createUrlConnection(url);
-        connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+        if (accessToken != null) {
+            connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+        }
 
         return readInputStream(url, responseClass, connection);
     }
 
+    @Nullable
     public <T> T post(final URL url, final Class<T> responseClass) {
         Validate.notNull(url);
         Validate.notNull(responseClass);
@@ -55,6 +65,7 @@ public class MinecraftClient {
         return readInputStream(url, responseClass, connection);
     }
 
+    @Nullable
     public <T> T post(final URL url, final Object body, final Class<T> responseClass) {
         Validate.notNull(url);
         Validate.notNull(body);
@@ -65,6 +76,7 @@ public class MinecraftClient {
         return readInputStream(url, responseClass, connection);
     }
 
+    @Nullable
     private <T> T readInputStream(final URL url, final Class<T> clazz, final HttpURLConnection connection) {
 
         InputStream inputStream = null;
@@ -75,6 +87,9 @@ public class MinecraftClient {
             if (status < 400) {
                 inputStream = connection.getInputStream();
                 result = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                if (result.isEmpty()) {
+                    return null;
+                }
                 return objectMapper.readValue(result, clazz);
             } else {
                 inputStream = connection.getErrorStream();
@@ -103,12 +118,14 @@ public class MinecraftClient {
         try {
             connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             connection.setRequestProperty("Content-Length", "" + postAsBytes.length);
-            connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+            if (accessToken != null) {
+                connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+            }
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
             outputStream = connection.getOutputStream();
             IOUtils.write(postAsBytes, outputStream);
-        } catch (IOException io) {
+        } catch (final IOException io) {
             throw new MinecraftClientException(ErrorType.SERVICE_UNAVAILABLE, "Failed to POST " + url, io);
         } finally {
             IOUtils.closeQuietly(outputStream);
@@ -125,7 +142,7 @@ public class MinecraftClient {
             connection.setReadTimeout(READ_TIMEOUT_MS);
             connection.setUseCaches(false);
             return connection;
-        } catch (IOException io) {
+        } catch (final IOException io) {
             throw new MinecraftClientException(ErrorType.SERVICE_UNAVAILABLE, "Failed connecting to " + url, io);
         }
     }

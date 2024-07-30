@@ -1,7 +1,9 @@
 package com.mojang.authlib.properties;
 
+import com.google.gson.annotations.SerializedName;
 import com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo;
 
+import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -10,31 +12,16 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.util.Base64;
 
-public class Property {
-    private final String name;
-    private final String value;
-    private final String signature;
-
+public record Property(
+    @SerializedName("name")
+    String name,
+    @SerializedName("value")
+    String value,
+    @SerializedName("signature")
+    @Nullable String signature
+) {
     public Property(final String name, final String value) {
         this(name, value, null);
-    }
-
-    public Property(final String name, final String value, final String signature) {
-        this.name = name;
-        this.value = value;
-        this.signature = signature;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public String getSignature() {
-        return signature;
     }
 
     public boolean hasSignature() {

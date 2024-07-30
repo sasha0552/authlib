@@ -7,18 +7,15 @@ import com.mojang.authlib.Environment;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.exceptions.MinecraftClientException;
 import com.mojang.authlib.minecraft.TelemetryEvent;
-import com.mojang.authlib.minecraft.TelemetryPropertyContainer;
 import com.mojang.authlib.minecraft.TelemetrySession;
 import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.authlib.yggdrasil.request.TelemetryEventsRequest;
-import com.mojang.authlib.yggdrasil.response.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.time.Instant;
 import java.util.concurrent.Executor;
-import java.util.function.Consumer;
 
 public class YggdrassilTelemetrySession implements TelemetrySession {
     private static final Logger LOGGER = LoggerFactory.getLogger(YggdrassilTelemetrySession.class);
@@ -32,7 +29,7 @@ public class YggdrassilTelemetrySession implements TelemetrySession {
     @VisibleForTesting
     YggdrassilTelemetrySession(final MinecraftClient minecraftClient, final Environment environment, final Executor ioExecutor) {
         this.minecraftClient = minecraftClient;
-        routeEvents = HttpAuthenticationService.constantURL(environment.getServicesHost() + "/events");
+        routeEvents = HttpAuthenticationService.constantURL(environment.servicesHost() + "/events");
         this.ioExecutor = ioExecutor;
     }
 
@@ -53,10 +50,10 @@ public class YggdrassilTelemetrySession implements TelemetrySession {
         ioExecutor.execute(() -> {
             try {
                 final TelemetryEventsRequest envelope = new TelemetryEventsRequest(ImmutableList.of(request));
-                minecraftClient.post(routeEvents, envelope, Response.class);
+                minecraftClient.post(routeEvents, envelope, Void.class);
             } catch (final MinecraftClientException e) {
                 // Telemetry is optional, so don't send too much warnings
-                LOGGER.debug("Failed to send telemetry event {}", request.name, e);
+                LOGGER.debug("Failed to send telemetry event {}", request.name(), e);
             }
         });
     }

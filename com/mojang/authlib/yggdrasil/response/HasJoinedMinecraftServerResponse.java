@@ -1,18 +1,15 @@
 package com.mojang.authlib.yggdrasil.response;
 
+import com.google.gson.annotations.SerializedName;
 import com.mojang.authlib.properties.PropertyMap;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class HasJoinedMinecraftServerResponse extends Response {
-    private UUID id;
-    private PropertyMap properties;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public PropertyMap getProperties() {
-        return properties;
-    }
+public record HasJoinedMinecraftServerResponse(
+    @SerializedName("id")
+    @Nullable UUID id,
+    @SerializedName("properties")
+    @Nullable PropertyMap properties
+) {
 }

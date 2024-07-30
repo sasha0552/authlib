@@ -1,23 +1,22 @@
 package com.mojang.authlib.yggdrasil.response;
 
+import com.google.gson.annotations.SerializedName;
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.PropertyMap;
 
 import java.util.UUID;
 
-public class MinecraftProfilePropertiesResponse extends Response {
-    private UUID id;
-    private String name;
-    private PropertyMap properties;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public PropertyMap getProperties() {
-        return properties;
+public record MinecraftProfilePropertiesResponse(
+    @SerializedName("id")
+    UUID id,
+    @SerializedName("name")
+    String name,
+    @SerializedName("properties")
+    PropertyMap properties
+) {
+    public GameProfile toProfile() {
+        final GameProfile profile = new GameProfile(id, name);
+        profile.getProperties().putAll(properties);
+        return profile;
     }
 }

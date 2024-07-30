@@ -45,10 +45,13 @@ public class MinecraftClientHttpException extends MinecraftClientException {
 
     @Override
     public AuthenticationException toAuthenticationException() {
-
-        //NOTE: Not sure if this is correct/expected mapping for Java client
-        //Typically Forbidden (401) means you have not enough privileges to access the service
-        if (hasError("InsufficientPrivilegesException") || status == FORBIDDEN) {
+        if (hasError("ForbiddenOperationException")) {
+            return new InvalidCredentialsException(getMessage());
+        } else if (hasError("multiplayer.access.banned")) {
+            return new UserBannedException();
+        } else if (hasError("InsufficientPrivilegesException") || status == FORBIDDEN) {
+            //NOTE: Not sure if this is correct/expected mapping for Java client
+            //Typically Forbidden (401) means you have not enough privileges to access the service
             return new InsufficientPrivilegesException(getMessage(), this);
         }
 
@@ -65,17 +68,17 @@ public class MinecraftClientHttpException extends MinecraftClientException {
 
     private Optional<String> getError() {
         return getResponse()
-                   .map(ErrorResponse::getError)
+                   .map(ErrorResponse::error)
                    .filter(StringUtils::isNotEmpty);
     }
 
     private static String getErrorMessage(final int status, final ErrorResponse response) {
         final String errorMessage;
         if (response != null) {
-            if (StringUtils.isNotEmpty(response.getErrorMessage())) {
-                errorMessage = response.getErrorMessage();
-            } else if (StringUtils.isNotEmpty(response.getError())) {
-                errorMessage = response.getError();
+            if (StringUtils.isNotEmpty(response.errorMessage())) {
+                errorMessage = response.errorMessage();
+            } else if (StringUtils.isNotEmpty(response.error())) {
+                errorMessage = response.error();
             } else {
                 errorMessage = "Status: " + status;
             }

@@ -64,11 +64,12 @@ public class PropertyMap extends ForwardingMultimap<String, Property> {
             for (final Property property : src.values()) {
                 final JsonObject object = new JsonObject();
 
-                object.addProperty("name", property.getName());
-                object.addProperty("value", property.getValue());
+                object.addProperty("name", property.name());
+                object.addProperty("value", property.value());
 
-                if (property.hasSignature()) {
-                    object.addProperty("signature", property.getSignature());
+                final String signature = property.signature();
+                if (signature != null) {
+                    object.addProperty("signature", signature);
                 }
 
                 result.add(object);

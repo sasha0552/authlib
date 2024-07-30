@@ -25,10 +25,10 @@ public class ObjectMapper {
         this.gson = Objects.requireNonNull(gson);
     }
 
-    public <T> T readValue(String value, Class<T> type) {
+    public <T> T readValue(final String value, final Class<T> type) {
         try {
             return gson.fromJson(value, type);
-        } catch (JsonParseException e) {
+        } catch (final JsonParseException e) {
             throw new MinecraftClientException(ErrorType.JSON_ERROR, "Failed to read value " + value, e);
         }
     }
@@ -36,7 +36,7 @@ public class ObjectMapper {
     public String writeValueAsString(final Object entity) {
         try {
             return gson.toJson(entity);
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             throw new MinecraftClientException(ErrorType.JSON_ERROR, "Failed to write value", e);
         }
     }

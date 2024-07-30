@@ -25,7 +25,7 @@ public class TextureUrlChecker {
     );
 
     public static boolean isAllowedTextureDomain(final String url) {
-        URI uri;
+        final URI uri;
 
         try {
             uri = new URI(url).normalize();

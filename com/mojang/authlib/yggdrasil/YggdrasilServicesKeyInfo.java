@@ -1,10 +1,10 @@
 package com.mojang.authlib.yggdrasil;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.mojang.authlib.exceptions.AuthenticationException;
+import com.google.gson.annotations.SerializedName;
+import com.mojang.authlib.exceptions.MinecraftClientException;
+import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.authlib.properties.Property;
-import com.mojang.authlib.yggdrasil.response.Response;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,11 +74,11 @@ public class YggdrasilServicesKeyInfo implements ServicesKeyInfo {
             .toList();
     }
 
-    public static ServicesKeySet get(final URL url, final YggdrasilAuthenticationService authenticationService) {
+    public static ServicesKeySet get(final URL url, final MinecraftClient client) {
         final CompletableFuture<?> ready = new CompletableFuture<>();
         final AtomicReference<ServicesKeySet> keySet = new AtomicReference<>(ServicesKeySet.EMPTY);
         FETCHER_EXECUTOR.scheduleAtFixedRate(() -> {
-            fetch(url, authenticationService).ifPresent(keySet::set);
+            fetch(url, client).ifPresent(keySet::set);
             ready.complete(null);
         }, 0, REFRESH_INTERVAL_HOURS, TimeUnit.HOURS);
 
@@ -88,21 +88,16 @@ public class YggdrasilServicesKeyInfo implements ServicesKeyInfo {
         });
     }
 
-    private static Optional<ServicesKeySet> fetch(final URL url, final YggdrasilAuthenticationService authenticationService) {
+    private static Optional<ServicesKeySet> fetch(final URL url, final MinecraftClient client) {
         final KeySetResponse response;
         try {
-            response = authenticationService.makeRequest(url, null, KeySetResponse.class);
-        } catch (final AuthenticationException e) {
+            response = client.get(url, KeySetResponse.class);
+        } catch (final MinecraftClientException e) {
             LOGGER.error("Failed to request yggdrasil public key", e);
             return Optional.empty();
         }
 
         if (response == null) {
-            return Optional.empty();
-        }
-
-        if (StringUtils.isNotBlank(response.getError())) {
-            LOGGER.error("Did not receive yggdrasil public key data, error: {} {}", response.getError(), response.getErrorMessage());
             return Optional.empty();
         }
 
@@ -138,10 +133,10 @@ public class YggdrasilServicesKeyInfo implements ServicesKeyInfo {
     @Override
     public boolean validateProperty(final Property property) {
         final Signature signature = signature();
-        final byte[] expected = Base64.getDecoder().decode(property.getSignature());
+        final byte[] expected = Base64.getDecoder().decode(property.signature());
 
         try {
-            signature.update(property.getValue().getBytes());
+            signature.update(property.value().getBytes());
             return signature.verify(expected);
         } catch (final SignatureException e) {
             LOGGER.error("Failed to verify signature on property {}", property, e);
@@ -149,18 +144,17 @@ public class YggdrasilServicesKeyInfo implements ServicesKeyInfo {
         return false;
     }
 
-    private static class KeySetResponse extends Response {
-        @Nullable
-        public final List<KeyData> profilePropertyKeys;
-        @Nullable
-        public final List<KeyData> playerCertificateKeys;
-
-        public KeySetResponse(@Nullable final List<KeyData> profilePropertyKeys, @Nullable final List<KeyData> playerCertificateKeys) {
-            this.profilePropertyKeys = profilePropertyKeys;
-            this.playerCertificateKeys = playerCertificateKeys;
-        }
+    private record KeySetResponse(
+        @SerializedName("profilePropertyKeys")
+        @Nullable List<KeyData> profilePropertyKeys,
+        @SerializedName("playerCertificateKeys")
+        @Nullable List<KeyData> playerCertificateKeys
+    ) {
     }
 
-    private record KeyData(ByteBuffer publicKey) {
+    private record KeyData(
+        @SerializedName("publicKey")
+        ByteBuffer publicKey
+    ) {
     }
 }
