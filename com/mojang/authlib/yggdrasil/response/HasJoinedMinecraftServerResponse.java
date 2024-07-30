@@ -1,18 +1,16 @@
 package com.mojang.authlib.yggdrasil.response;
 
-import com.mojang.authlib.ProfileProperty;
-
-import java.util.List;
+import com.mojang.authlib.properties.PropertyMap;
 
 public class HasJoinedMinecraftServerResponse extends Response {
     private String id;
-    private List<ProfileProperty> properties;
+    private PropertyMap properties;
 
     public String getId() {
         return id;
     }
 
-    public List<ProfileProperty> getProperties() {
+    public PropertyMap getProperties() {
         return properties;
     }
 }

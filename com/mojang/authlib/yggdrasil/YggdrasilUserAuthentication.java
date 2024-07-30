@@ -102,16 +102,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
         if (user == null) return;
 
         if (user.getProperties() != null) {
-            for (User.Property property : user.getProperties()) {
-                Collection<String> values = getModifiableUserProperties().get(property.getKey());
-
-                if (values == null) {
-                    values = new ArrayList<String>();
-                    getModifiableUserProperties().put(property.getKey(), values);
-                }
-
-                values.add(property.getValue());
-            }
+            getModifiableUserProperties().putAll(user.getProperties());
         }
     }
 
@@ -206,15 +197,15 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
     }
 
     @Override
-    public void loadFromStorage(Map<String, String> credentials) {
+    public void loadFromStorage(Map<String, Object> credentials) {
         super.loadFromStorage(credentials);
 
-        accessToken = credentials.get(STORAGE_KEY_ACCESS_TOKEN);
+        accessToken = String.valueOf(credentials.get(STORAGE_KEY_ACCESS_TOKEN));
     }
 
     @Override
-    public Map<String, String> saveForStorage() {
-        Map<String, String> result = super.saveForStorage();
+    public Map<String, Object> saveForStorage() {
+        Map<String, Object> result = super.saveForStorage();
 
         if (StringUtils.isNotBlank(getAuthenticatedToken())) {
             result.put(STORAGE_KEY_ACCESS_TOKEN, getAuthenticatedToken());

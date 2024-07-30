@@ -1,8 +1,10 @@
 package com.mojang.authlib;
 
+import com.google.common.collect.Multimap;
 import com.mojang.authlib.exceptions.AuthenticationException;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 
-import java.util.Collection;
 import java.util.Map;
 
 public interface UserAuthentication {
@@ -99,7 +101,7 @@ public interface UserAuthentication {
      *
      * @param credentials Map to load credentials or state from
      */
-    void loadFromStorage(Map<String, String> credentials);
+    void loadFromStorage(Map<String, Object> credentials);
 
     /**
      * Saves any known credentials to a Map and returns the result.
@@ -108,7 +110,7 @@ public interface UserAuthentication {
      *
      * @return Map containing any saved credentials and state for storage
      */
-    Map<String, String> saveForStorage();
+    Map<String, Object> saveForStorage();
 
     /**
      * Sets the username to authenticate with for the next {@link #logIn()} call.
@@ -151,11 +153,11 @@ public interface UserAuthentication {
      * <p />
      * This method will return an empty Multimap if the user is not logged in.
      * <p />
-     * The returned Multimap is immutable and cannot be changed.
+     * The returned Multimap will ignore any changes.
      *
      * @return Multimap of user properties.
      */
-    public Map<String, Collection<String>> getUserProperties();
+    public PropertyMap getUserProperties();
 
     /**
      * Gets the type of the currently logged in user.

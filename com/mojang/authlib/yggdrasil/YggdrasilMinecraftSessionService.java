@@ -1,16 +1,18 @@
 package com.mojang.authlib.yggdrasil;
 
+import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
-import com.mojang.authlib.ProfileProperty;
+import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.yggdrasil.request.JoinMinecraftServerRequest;
 import com.mojang.authlib.yggdrasil.response.HasJoinedMinecraftServerResponse;
+import com.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.authlib.yggdrasil.response.Response;
 import org.apache.commons.codec.Charsets;
@@ -23,6 +25,8 @@ import java.net.URL;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -73,9 +77,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
                 GameProfile result = new GameProfile(response.getId(), user.getName());
 
                 if (response.getProperties() != null) {
-                    for (ProfileProperty property : response.getProperties()) {
-                        result.getProperties().put(property.getName(), property);
-                    }
+                    result.getProperties().putAll(response.getProperties());
                 }
 
                 return result;
@@ -90,8 +92,8 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     }
 
     @Override
-    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile) {
-        ProfileProperty textureProperty = profile.getProperties().get("textures");
+    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile, boolean requireSecure) {
+        Property textureProperty = Iterables.getFirst(profile.getProperties().get("textures"), null);
         if (textureProperty == null) return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
 
         if (!textureProperty.hasSignature()) {
@@ -123,7 +125,44 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
         }
 
+        if (requireSecure) {
+            if (result.isPublic()) {
+                LOGGER.error("Decrypted textures payload was public but we require secure data");
+                return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+            }
+
+            Calendar limit = Calendar.getInstance();
+            limit.add(Calendar.DATE, -1);
+            Date validFrom = new Date(result.getTimestamp());
+
+            if (validFrom.before(limit.getTime())) {
+                LOGGER.error("Decrypted textures payload is too old ({0}, but we need it to be at least {1})", validFrom, limit);
+                return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+            }
+        }
+
         return result.getTextures() == null ? new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>() : result.getTextures();
+    }
+
+    @Override
+    public GameProfile fillProfileProperties(GameProfile profile) {
+        if (profile.getId() == null || profile.getId().length() == 0) {
+            return profile;
+        }
+
+        try {
+            URL url = HttpAuthenticationService.constantURL(BASE_URL + "profile/" + profile.getId());
+            MinecraftProfilePropertiesResponse response = getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
+            LOGGER.debug("Successfully fetched profile properties for " + profile);
+
+            GameProfile result = new GameProfile(response.getId(), response.getName());
+            result.getProperties().putAll(response.getProperties());
+            profile.getProperties().putAll(response.getProperties());
+            return result;
+        } catch (AuthenticationException e) {
+            LOGGER.warn("Couldn't look up profile properties for " + profile, e);
+            return profile;
+        }
     }
 
     @Override

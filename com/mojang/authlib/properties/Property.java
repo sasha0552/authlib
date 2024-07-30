@@ -1,19 +1,19 @@
-package com.mojang.authlib;
+package com.mojang.authlib.properties;
 
 import org.apache.commons.codec.binary.Base64;
 
 import java.security.*;
 
-public class ProfileProperty {
+public class Property {
     private final String name;
     private final String value;
     private final String signature;
 
-    public ProfileProperty(String value, String name) {
+    public Property(String value, String name) {
         this(value, name, null);
     }
 
-    public ProfileProperty(String name, String value, String signature) {
+    public Property(String name, String value, String signature) {
         this.name = name;
         this.value = value;
         this.signature = signature;
