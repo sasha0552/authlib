@@ -49,9 +49,9 @@ public class MinecraftClientHttpException extends MinecraftClientException {
             return new InvalidCredentialsException(getMessage());
         } else if (hasError("multiplayer.access.banned")) {
             return new UserBannedException();
-        } else if (hasError("InsufficientPrivilegesException") || status == FORBIDDEN) {
-            //NOTE: Not sure if this is correct/expected mapping for Java client
-            //Typically Forbidden (401) means you have not enough privileges to access the service
+        } else if (hasError("FORCED_USERNAME_CHANGE")) {
+            return new ForcedUsernameChangeException();
+        } else if (hasError("InsufficientPrivilegesException")) {
             return new InsufficientPrivilegesException(getMessage(), this);
         }
 

@@ -22,6 +22,7 @@ import com.mojang.authlib.yggdrasil.request.JoinMinecraftServerRequest;
 import com.mojang.authlib.yggdrasil.response.HasJoinedMinecraftServerResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
+import com.mojang.authlib.yggdrasil.response.ProfileAction;
 import com.mojang.util.UUIDTypeAdapter;
 import com.mojang.util.UndashedUuid;
 import org.slf4j.Logger;
@@ -36,8 +37,10 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class YggdrasilMinecraftSessionService implements MinecraftSessionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(YggdrasilMinecraftSessionService.class);
@@ -48,12 +51,12 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
     private final URL checkUrl;
 
     private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
-    private final LoadingCache<UUID, Optional<GameProfile>> insecureProfiles = CacheBuilder
+    private final LoadingCache<UUID, Optional<ProfileResult>> insecureProfiles = CacheBuilder
         .newBuilder()
         .expireAfterWrite(6, TimeUnit.HOURS)
         .build(new CacheLoader<>() {
             @Override
-            public Optional<GameProfile> load(final UUID key) {
+            public Optional<ProfileResult> load(final UUID key) {
                 return Optional.ofNullable(fetchProfileUncached(key, false));
             }
         });
@@ -78,7 +81,8 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
     }
 
     @Override
-    public GameProfile hasJoinedServer(final String profileName, final String serverId, @Nullable final InetAddress address) throws AuthenticationUnavailableException {
+    @Nullable
+    public ProfileResult hasJoinedServer(final String profileName, final String serverId, @Nullable final InetAddress address) throws AuthenticationUnavailableException {
         final Map<String, Object> arguments = new HashMap<>();
 
         arguments.put("username", profileName);
@@ -99,7 +103,10 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
                     result.getProperties().putAll(response.properties());
                 }
 
-                return result;
+                final Set<ProfileActionType> profileActions = response.profileActions().stream()
+                    .map(ProfileAction::type)
+                    .collect(Collectors.toSet());
+                return new ProfileResult(result, profileActions);
             } else {
                 return null;
             }
@@ -147,7 +154,7 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
 
     @Nullable
     @Override
-    public GameProfile fetchProfile(final UUID profileId, final boolean requireSecure) {
+    public ProfileResult fetchProfile(final UUID profileId, final boolean requireSecure) {
         if (!requireSecure) {
             return insecureProfiles.getUnchecked(profileId).orElse(null);
         }
@@ -171,7 +178,7 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
     }
 
     @Nullable
-    private GameProfile fetchProfileUncached(final UUID profileId, final boolean requireSecure) {
+    private ProfileResult fetchProfileUncached(final UUID profileId, final boolean requireSecure) {
         try {
             URL url = HttpAuthenticationService.constantURL(baseUrl + "profile/" + UndashedUuid.toString(profileId));
             url = HttpAuthenticationService.concatenateURL(url, "unsigned=" + !requireSecure);
@@ -183,8 +190,12 @@ public class YggdrasilMinecraftSessionService implements MinecraftSessionService
             }
 
             final GameProfile profile = response.toProfile();
+            final Set<ProfileActionType> profileActions = response.profileActions().stream()
+                .map(ProfileAction::type)
+                .collect(Collectors.toSet());
+
             LOGGER.debug("Successfully fetched profile properties for {}", profile);
-            return profile;
+            return new ProfileResult(profile, profileActions);
         } catch (final MinecraftClientException | IllegalArgumentException e) {
             LOGGER.warn("Couldn't look up profile properties for {}", profileId, e);
             return null;

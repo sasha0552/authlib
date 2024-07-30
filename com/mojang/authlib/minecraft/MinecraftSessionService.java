@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.yggdrasil.ProfileResult;
 
 import javax.annotation.Nullable;
 import java.net.InetAddress;
@@ -36,7 +37,8 @@ public interface MinecraftSessionService {
      * @throws com.mojang.authlib.exceptions.AuthenticationUnavailableException Thrown when the servers return a malformed response, or are otherwise unavailable
      * @return Full game profile if the user had joined, otherwise null
      */
-    GameProfile hasJoinedServer(String profileName, String serverId, @Nullable InetAddress address) throws AuthenticationUnavailableException;
+    @Nullable
+    ProfileResult hasJoinedServer(String profileName, String serverId, @Nullable InetAddress address) throws AuthenticationUnavailableException;
 
     /**
      * Gets a map of all known textures from a {@link com.mojang.authlib.GameProfile}.
@@ -61,7 +63,7 @@ public interface MinecraftSessionService {
      * @return Fetched profile for the requested user, or {@code null} if unsuccessful or the user did not exist.
      */
     @Nullable
-    GameProfile fetchProfile(UUID profileId, boolean requireSecure);
+    ProfileResult fetchProfile(UUID profileId, boolean requireSecure);
 
     /**
      * Verifies the signature and returns the value of a {@link com.mojang.authlib.properties.Property}.

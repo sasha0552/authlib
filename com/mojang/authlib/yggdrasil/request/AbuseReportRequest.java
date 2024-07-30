@@ -18,7 +18,9 @@ public record AbuseReportRequest(
     @SerializedName("thirdPartyServerInfo")
     @Nullable ThirdPartyServerInfo thirdPartyServerInfo,
     @SerializedName("realmInfo")
-    @Nullable RealmInfo realmInfo
+    @Nullable RealmInfo realmInfo,
+    @SerializedName("reportType")
+    String reportType
 ) {
     public record ClientInfo(
         @SerializedName("clientVersion")
