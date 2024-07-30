@@ -29,11 +29,4 @@ public class AuthenticationResponse extends Response {
         return user;
     }
 
-    public class User {
-        private String id;
-
-        public String getId() {
-            return id;
-        }
-    }
 }

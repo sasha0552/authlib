@@ -1,5 +1,6 @@
 package com.mojang.authlib;
 
+import com.google.common.collect.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
@@ -13,6 +14,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
     protected static final String STORAGE_KEY_USER_ID = "userid";
 
     private final AuthenticationService authenticationService;
+    private final Multimap<String, String> userProperties = HashMultimap.create();
     private String userid;
     private String username;
     private String password;
@@ -33,6 +35,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
         password = null;
         userid = null;
         setSelectedProfile(null);
+        getModifiableUserProperties().clear();
     }
 
     @Override
@@ -151,6 +154,19 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
     @Override
     public String getUserID() {
         return userid;
+    }
+
+    @Override
+    public Multimap<String, String> getUserProperties() {
+        if (isLoggedIn()) {
+            return ImmutableMultimap.copyOf(getModifiableUserProperties());
+        } else {
+            return ImmutableMultimap.of();
+        }
+    }
+
+    protected Multimap<String, String> getModifiableUserProperties() {
+        return userProperties;
     }
 
     protected void setUserid(String userid) {

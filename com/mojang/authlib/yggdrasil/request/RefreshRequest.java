@@ -7,6 +7,7 @@ public class RefreshRequest {
     private String clientToken;
     private String accessToken;
     private GameProfile selectedProfile;
+    private boolean requestUser = true;
 
     public RefreshRequest(YggdrasilUserAuthentication authenticationService) {
         this(authenticationService, null);

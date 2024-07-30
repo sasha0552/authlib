@@ -10,6 +10,7 @@ import com.mojang.authlib.yggdrasil.request.AuthenticationRequest;
 import com.mojang.authlib.yggdrasil.request.RefreshRequest;
 import com.mojang.authlib.yggdrasil.response.AuthenticationResponse;
 import com.mojang.authlib.yggdrasil.response.RefreshResponse;
+import com.mojang.authlib.yggdrasil.response.User;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -87,6 +88,13 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
         accessToken = response.getAccessToken();
         profiles = response.getAvailableProfiles();
         setSelectedProfile(response.getSelectedProfile());
+        getModifiableUserProperties().clear();
+
+        if (response.getUser() != null && response.getUser().getProperties() != null) {
+            for (User.Property property : response.getUser().getProperties()) {
+                getModifiableUserProperties().put(property.getKey(), property.getValue());
+            }
+        }
     }
 
     protected void logInWithToken() throws AuthenticationException {
@@ -110,10 +118,23 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
         }
 
+        if (response.getUser() != null && response.getUser().getId() != null) {
+            setUserid(response.getUser().getId());
+        } else {
+            setUserid(getUsername());
+        }
+
         isOnline = true;
         accessToken = response.getAccessToken();
         profiles = response.getAvailableProfiles();
         setSelectedProfile(response.getSelectedProfile());
+        getModifiableUserProperties().clear();
+
+        if (response.getUser() != null && response.getUser().getProperties() != null) {
+            for (User.Property property : response.getUser().getProperties()) {
+                getModifiableUserProperties().put(property.getKey(), property.getValue());
+            }
+        }
     }
 
     @Override
