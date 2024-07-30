@@ -3,11 +3,12 @@ package com.mojang.authlib.yggdrasil;
 import com.mojang.authlib.*;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
-import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.yggdrasil.request.AuthenticationRequest;
 import com.mojang.authlib.yggdrasil.request.RefreshRequest;
+import com.mojang.authlib.yggdrasil.request.ValidateRequest;
 import com.mojang.authlib.yggdrasil.response.AuthenticationResponse;
 import com.mojang.authlib.yggdrasil.response.RefreshResponse;
+import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.authlib.yggdrasil.response.User;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +16,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
 
 public class YggdrasilUserAuthentication extends HttpUserAuthentication {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -120,6 +122,12 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
 
         LOGGER.info("Logging in with access token");
 
+        if (checkTokenValidity()) {
+            LOGGER.debug("Skipping refresh call as we're safely logged in.");
+            isOnline = true;
+            return;
+        }
+
         RefreshRequest request = new RefreshRequest(this);
         RefreshResponse response = getAuthenticationService().makeRequest(ROUTE_REFRESH, request, RefreshResponse.class);
 
@@ -146,6 +154,16 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
         getModifiableUserProperties().clear();
 
         updateUserProperties(response.getUser());
+    }
+
+    protected boolean checkTokenValidity() throws AuthenticationException {
+        ValidateRequest request = new ValidateRequest(this);
+        try {
+            getAuthenticationService().makeRequest(ROUTE_VALIDATE, request, Response.class);
+            return true;
+        } catch (AuthenticationException ex) {
+            return false;
+        }
     }
 
     @Override

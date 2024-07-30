@@ -2,12 +2,12 @@ package com.mojang.authlib.yggdrasil.request;
 
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 
-public class InvalidateRequest {
-    private String accessToken;
+public class ValidateRequest {
     private String clientToken;
+    private String accessToken;
 
-    public InvalidateRequest(YggdrasilUserAuthentication authenticationService) {
-        this.accessToken = authenticationService.getAuthenticatedToken();
+    public ValidateRequest(YggdrasilUserAuthentication authenticationService) {
         this.clientToken = authenticationService.getAuthenticationService().getClientToken();
+        this.accessToken = authenticationService.getAuthenticatedToken();
     }
 }
