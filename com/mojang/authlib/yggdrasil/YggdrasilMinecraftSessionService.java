@@ -27,8 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -38,16 +36,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
-    private static final String[] ALLOWED_DOMAINS = {
-        ".minecraft.net",
-        ".mojang.com",
-    };
-
-    private static final String[] BLOCKED_DOMAINS = {
-        "bugs.mojang.com",
-        "education.minecraft.net",
-        "feedback.minecraft.net"
-    };
 
     private static final Logger LOGGER = LoggerFactory.getLogger(YggdrasilMinecraftSessionService.class);
     private final String baseUrl;
@@ -153,7 +141,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
         for (final Map.Entry<MinecraftProfileTexture.Type, MinecraftProfileTexture> entry : result.getTextures().entrySet()) {
             final String url = entry.getValue().getUrl();
-            if (!isAllowedTextureDomain(url)) {
+            if (!TextureUrlChecker.isAllowedTextureDomain(url)) {
                 LOGGER.error("Textures payload contains blocked domain: {}", url);
                 return new HashMap<>();
             }
@@ -218,25 +206,4 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         return (YggdrasilAuthenticationService) super.getAuthenticationService();
     }
 
-    private static boolean isAllowedTextureDomain(final String url) {
-        URI uri;
-
-        try {
-            uri = new URI(url);
-        } catch (final URISyntaxException ignored) {
-            throw new IllegalArgumentException("Invalid URL '" + url + "'");
-        }
-
-        final String domain = uri.getHost();
-        return isDomainOnList(domain, ALLOWED_DOMAINS) && !isDomainOnList(domain, BLOCKED_DOMAINS);
-    }
-
-    private static boolean isDomainOnList(final String domain, final String[] list) {
-        for (final String entry : list) {
-            if (domain.endsWith(entry)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
