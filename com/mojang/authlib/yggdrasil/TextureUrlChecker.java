@@ -30,7 +30,7 @@ public class TextureUrlChecker {
         try {
             uri = new URI(url).normalize();
         } catch (final URISyntaxException ignored) {
-            throw new IllegalArgumentException("Invalid URL '" + url + "'");
+            return false;
         }
 
         final String scheme = uri.getScheme();
