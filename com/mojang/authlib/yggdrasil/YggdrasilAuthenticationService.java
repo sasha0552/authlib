@@ -22,19 +22,21 @@ import com.mojang.authlib.exceptions.InsufficientPrivilegesException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.authlib.exceptions.UserMigratedException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
+import com.mojang.authlib.minecraft.UserApiService;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse;
 import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.util.UUIDTypeAdapter;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.UUID;
-import javax.annotation.Nullable;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class YggdrasilAuthenticationService extends HttpAuthenticationService {
 
@@ -73,7 +75,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     private static Environment determineEnvironment() {
         return EnvironmentParser
                    .getEnvironmentFromProperties()
-                   .orElse(YggdrasilEnvironment.PROD);
+                   .orElse(YggdrasilEnvironment.PROD.getEnvironment());
     }
 
     @Override
@@ -129,7 +131,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         @Override
         public GameProfile deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
             final JsonObject object = (JsonObject) json;
-            final UUID id = object.has("id") ? context.<UUID>deserialize(object.get("id"), UUID.class) : null;
+            final UUID id = object.has("id") ? context.deserialize(object.get("id"), UUID.class) : null;
             final String name = object.has("name") ? object.getAsJsonPrimitive("name").getAsString() : null;
             return new GameProfile(id, name);
         }
@@ -147,7 +149,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         }
     }
 
-    public YggdrasilSocialInteractionsService createSocialInteractionsService(final String accessToken) throws AuthenticationException {
-        return new YggdrasilSocialInteractionsService(accessToken, getProxy(), environment);
+    public UserApiService createUserApiService(final String accessToken) throws AuthenticationException {
+        return new YggdrasilUserApiService(accessToken, getProxy(), environment);
     }
 }

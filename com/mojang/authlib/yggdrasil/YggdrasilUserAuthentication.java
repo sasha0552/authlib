@@ -1,10 +1,10 @@
 package com.mojang.authlib.yggdrasil;
 
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.Environment;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.HttpUserAuthentication;
-import com.mojang.authlib.Environment;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
@@ -42,7 +42,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
     private boolean isOnline;
 
     public YggdrasilUserAuthentication(final YggdrasilAuthenticationService authenticationService, final String clientToken, final Agent agent) {
-        this(authenticationService, clientToken, agent, YggdrasilEnvironment.PROD);
+        this(authenticationService, clientToken, agent, YggdrasilEnvironment.PROD.getEnvironment());
     }
 
     public YggdrasilUserAuthentication(final YggdrasilAuthenticationService authenticationService, final String clientToken, final Agent agent, Environment env) {

@@ -22,8 +22,6 @@ import com.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.util.UUIDTypeAdapter;
-import org.apache.commons.codec.Charsets;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,9 +30,11 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,8 +47,9 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     };
 
     private static final String[] BLOCKED_DOMAINS = {
-        "education.minecraft.net",
         "bugs.mojang.com",
+        "education.minecraft.net",
+        "feedback.minecraft.net"
     };
 
     private static final Logger LOGGER = LogManager.getLogger();
@@ -61,9 +62,9 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     private final LoadingCache<GameProfile, GameProfile> insecureProfiles = CacheBuilder
         .newBuilder()
         .expireAfterWrite(6, TimeUnit.HOURS)
-        .build(new CacheLoader<GameProfile, GameProfile>() {
+        .build(new CacheLoader<>() {
             @Override
-            public GameProfile load(final GameProfile key) throws Exception {
+            public GameProfile load(final GameProfile key) {
                 return fillGameProfile(key, false);
             }
         });
@@ -97,7 +98,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
     @Override
     public GameProfile hasJoinedServer(final GameProfile user, final String serverId, final InetAddress address) throws AuthenticationUnavailableException {
-        final Map<String, Object> arguments = new HashMap<String, Object>();
+        final Map<String, Object> arguments = new HashMap<>();
 
         arguments.put("username", user.getName());
         arguments.put("serverId", serverId);
@@ -134,7 +135,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         final Property textureProperty = Iterables.getFirst(profile.getProperties().get("textures"), null);
 
         if (textureProperty == null) {
-            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+            return new HashMap<>();
         }
 
         if (requireSecure) {
@@ -151,15 +152,15 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
         final MinecraftTexturesPayload result;
         try {
-            final String json = new String(Base64.decodeBase64(textureProperty.getValue()), Charsets.UTF_8);
+            final String json = new String(Base64.getDecoder().decode(textureProperty.getValue()), StandardCharsets.UTF_8);
             result = gson.fromJson(json, MinecraftTexturesPayload.class);
         } catch (final JsonParseException e) {
             LOGGER.error("Could not decode textures payload", e);
-            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+            return new HashMap<>();
         }
 
         if (result == null || result.getTextures() == null) {
-            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+            return new HashMap<>();
         }
 
         for (final Map.Entry<MinecraftProfileTexture.Type, MinecraftProfileTexture> entry : result.getTextures().entrySet()) {

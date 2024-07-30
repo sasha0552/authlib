@@ -1,8 +1,40 @@
 package com.mojang.authlib.minecraft;
 
 import java.util.UUID;
+import java.util.concurrent.Executor;
 
-public interface SocialInteractionsService {
+public interface UserApiService {
+    UserApiService OFFLINE = new UserApiService() {
+        @Override
+        public boolean serversAllowed() {
+            return true;
+        }
+
+        @Override
+        public boolean realmsAllowed() {
+            return true;
+        }
+
+        @Override
+        public boolean chatAllowed() {
+            return true;
+        }
+
+        @Override
+        public boolean telemetryAllowed() {
+            return false;
+        }
+
+        @Override
+        public boolean isBlockedPlayer(final UUID playerID) {
+            return false;
+        }
+
+        @Override
+        public TelemetrySession newTelemetrySession(final Executor executor) {
+            return TelemetrySession.DISABLED;
+        }
+    };
 
     /**
      * Checks if the user is allowed to play on multiplayer servers.
@@ -39,4 +71,11 @@ public interface SocialInteractionsService {
      * @return True if communications from the player should be blocked
      */
     boolean isBlockedPlayer(UUID playerID);
+
+    /**
+     * Create fresh telemetry session.
+     *
+     * @param executor - executor used for sending operations
+     */
+    TelemetrySession newTelemetrySession(Executor executor);
 }

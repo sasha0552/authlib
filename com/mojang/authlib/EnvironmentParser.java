@@ -1,11 +1,11 @@
 package com.mojang.authlib;
 
 import com.mojang.authlib.yggdrasil.YggdrasilEnvironment;
-import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 
 import static java.util.Arrays.asList;
 
@@ -28,10 +28,7 @@ public class EnvironmentParser {
 
     public static Optional<Environment> getEnvironmentFromProperties() {
         final String envName = environmentOverride != null ? environmentOverride : System.getProperty(PROP_ENV);
-        final Optional<Environment> env = YggdrasilEnvironment
-                                              .fromString(envName)
-                                              .map(Environment.class::cast);
-
+        final Optional<Environment> env = YggdrasilEnvironment.fromString(envName);
         return env.isPresent() ? env : fromHostNames();
 
     }

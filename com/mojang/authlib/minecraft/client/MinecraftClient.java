@@ -4,17 +4,18 @@ import com.mojang.authlib.exceptions.MinecraftClientException;
 import com.mojang.authlib.exceptions.MinecraftClientException.ErrorType;
 import com.mojang.authlib.exceptions.MinecraftClientHttpException;
 import com.mojang.authlib.yggdrasil.response.ErrorResponse;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
-import org.apache.commons.io.Charsets;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.Validate;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.nio.charset.StandardCharsets;
 
 
 /**
@@ -52,7 +53,7 @@ public class MinecraftClient {
         Validate.notNull(body);
         Validate.notNull(responseClass);
         final String bodyAsJson = objectMapper.writeValueAsString(body);
-        final byte[] postAsBytes = bodyAsJson.getBytes(Charsets.UTF_8);
+        final byte[] postAsBytes = bodyAsJson.getBytes(StandardCharsets.UTF_8);
         final HttpURLConnection connection = postInternal(url, postAsBytes);
         return readInputStream(url, responseClass, connection);
     }
@@ -66,13 +67,13 @@ public class MinecraftClient {
             final String result;
             if (status < 400) {
                 inputStream = connection.getInputStream();
-                result = IOUtils.toString(inputStream, Charsets.UTF_8);
+                result = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 return objectMapper.readValue(result, clazz);
             } else {
                 inputStream = connection.getErrorStream();
                 final ErrorResponse errorResponse;
                 if (inputStream != null) {
-                    result = IOUtils.toString(inputStream, Charsets.UTF_8);
+                    result = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                     errorResponse = objectMapper.readValue(result, ErrorResponse.class);
                     throw new MinecraftClientHttpException(status, errorResponse);
                 } else {

@@ -1,13 +1,12 @@
 package com.mojang.authlib.yggdrasil;
 
 import com.mojang.authlib.Environment;
-import java.util.Optional;
-import java.util.StringJoiner;
-import java.util.stream.Stream;
+
 import javax.annotation.Nullable;
+import java.util.Optional;
+import java.util.stream.Stream;
 
-public enum YggdrasilEnvironment implements Environment {
-
+public enum YggdrasilEnvironment {
     PROD(
         "https://authserver.mojang.com",
         "https://api.mojang.com",
@@ -21,53 +20,21 @@ public enum YggdrasilEnvironment implements Environment {
         "https://api-staging.minecraftservices.com"
     );
 
-    private final String authHost;
-    private final String accountsHost;
-    private final String sessionHost;
-    private final String servicesHost;
+    private final Environment environment;
 
     YggdrasilEnvironment(final String authHost, final String accountsHost, final String sessionHost, final String servicesHost) {
-        this.authHost = authHost;
-        this.accountsHost = accountsHost;
-        this.sessionHost = sessionHost;
-        this.servicesHost = servicesHost;
+        this.environment = Environment.create(authHost, accountsHost, sessionHost, servicesHost, name());
     }
 
-    public String getAuthHost() {
-        return authHost;
+    public Environment getEnvironment() {
+        return environment;
     }
 
-    public String getAccountsHost() {
-        return accountsHost;
-    }
-
-    public String getSessionHost() {
-        return sessionHost;
-    }
-
-    public String getServicesHost() {
-        return servicesHost;
-    }
-
-    public String getName() {
-        return this.name();
-    }
-
-    @Override
-    public String asString() {
-        return new StringJoiner(", ", "", "")
-                   .add("authHost='" + authHost + "'")
-                   .add("accountsHost='" + accountsHost + "'")
-                   .add("sessionHost='" + sessionHost + "'")
-                   .add("servicesHost='" + servicesHost + "'")
-                   .add("name='" + getName() + "'")
-                   .toString();
-    }
-
-    public static Optional<YggdrasilEnvironment> fromString(@Nullable String value) {
+    public static Optional<Environment> fromString(@Nullable String value) {
         return Stream
-                   .of(YggdrasilEnvironment.values())
-                   .filter(env -> value != null && value.equalsIgnoreCase(env.name()))
-                   .findFirst();
+            .of(YggdrasilEnvironment.values())
+            .filter(env -> value != null && value.equalsIgnoreCase(env.name()))
+            .findFirst()
+            .map(YggdrasilEnvironment::getEnvironment);
     }
 }

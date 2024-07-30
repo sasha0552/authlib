@@ -1,12 +1,11 @@
 package com.mojang.authlib.properties;
 
-import org.apache.commons.codec.binary.Base64;
-
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.util.Base64;
 
 public class Property {
     private final String name;
@@ -44,7 +43,7 @@ public class Property {
             final Signature signature = Signature.getInstance("SHA1withRSA");
             signature.initVerify(publicKey);
             signature.update(value.getBytes());
-            return signature.verify(Base64.decodeBase64(this.signature));
+            return signature.verify(Base64.getDecoder().decode(this.signature));
         } catch (final NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (final InvalidKeyException e) {
