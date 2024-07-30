@@ -10,7 +10,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Map;
 
 public abstract class HttpAuthenticationService extends BaseAuthenticationService {
@@ -18,7 +22,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
 
     private final Proxy proxy;
 
-    protected HttpAuthenticationService(Proxy proxy) {
+    protected HttpAuthenticationService(final Proxy proxy) {
         Validate.notNull(proxy);
         this.proxy = proxy;
     }
@@ -32,10 +36,10 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
         return proxy;
     }
 
-    protected HttpURLConnection createUrlConnection(URL url) throws IOException {
+    protected HttpURLConnection createUrlConnection(final URL url) throws IOException {
         Validate.notNull(url);
         LOGGER.debug("Opening connection to " + url);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
+        final HttpURLConnection connection = (HttpURLConnection) url.openConnection(proxy);
         connection.setConnectTimeout(15000);
         connection.setReadTimeout(15000);
         connection.setUseCaches(false);
@@ -55,12 +59,12 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
      * @return Raw text response from the server
      * @throws IOException The request was not successful
      */
-    public String performPostRequest(URL url, String post, String contentType) throws IOException {
+    public String performPostRequest(final URL url, final String post, final String contentType) throws IOException {
         Validate.notNull(url);
         Validate.notNull(post);
         Validate.notNull(contentType);
-        HttpURLConnection connection = createUrlConnection(url);
-        byte[] postAsBytes = post.getBytes(Charsets.UTF_8);
+        final HttpURLConnection connection = createUrlConnection(url);
+        final byte[] postAsBytes = post.getBytes(Charsets.UTF_8);
 
         connection.setRequestProperty("Content-Type", contentType + "; charset=utf-8");
         connection.setRequestProperty("Content-Length", "" + postAsBytes.length);
@@ -81,17 +85,17 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
         InputStream inputStream = null;
         try {
             inputStream = connection.getInputStream();
-            String result = IOUtils.toString(inputStream, Charsets.UTF_8);
+            final String result = IOUtils.toString(inputStream, Charsets.UTF_8);
             LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
             LOGGER.debug("Response: " + result);
             return result;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             IOUtils.closeQuietly(inputStream);
             inputStream = connection.getErrorStream();
 
             if (inputStream != null) {
                 LOGGER.debug("Reading error page from " + url);
-                String result = IOUtils.toString(inputStream, Charsets.UTF_8);
+                final String result = IOUtils.toString(inputStream, Charsets.UTF_8);
                 LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
                 LOGGER.debug("Response: " + result);
                 return result;
@@ -115,26 +119,26 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
      * @return Raw text response from the server
      * @throws IOException The request was not successful
      */
-    public String performGetRequest(URL url) throws IOException {
+    public String performGetRequest(final URL url) throws IOException {
         Validate.notNull(url);
-        HttpURLConnection connection = createUrlConnection(url);
+        final HttpURLConnection connection = createUrlConnection(url);
 
         LOGGER.debug("Reading data from " + url);
 
         InputStream inputStream = null;
         try {
             inputStream = connection.getInputStream();
-            String result = IOUtils.toString(inputStream, Charsets.UTF_8);
+            final String result = IOUtils.toString(inputStream, Charsets.UTF_8);
             LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
             LOGGER.debug("Response: " + result);
             return result;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             IOUtils.closeQuietly(inputStream);
             inputStream = connection.getErrorStream();
 
             if (inputStream != null) {
                 LOGGER.debug("Reading error page from " + url);
-                String result = IOUtils.toString(inputStream, Charsets.UTF_8);
+                final String result = IOUtils.toString(inputStream, Charsets.UTF_8);
                 LOGGER.debug("Successful read, server response was " + connection.getResponseCode());
                 LOGGER.debug("Response: " + result);
                 return result;
@@ -155,10 +159,10 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
      * @param url URL to construct
      * @return URL constructed
      */
-    public static URL constantURL(String url) {
+    public static URL constantURL(final String url) {
         try {
             return new URL(url);
-        } catch (MalformedURLException ex) {
+        } catch (final MalformedURLException ex) {
             throw new Error("Couldn't create constant for " + url, ex);
         }
     }
@@ -169,18 +173,20 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
      * @param query Map to convert into a text based query
      * @return Resulting query.
      */
-    public static String buildQuery(Map<String, Object> query) {
-        if (query == null) return "";
-        StringBuilder builder = new StringBuilder();
+    public static String buildQuery(final Map<String, Object> query) {
+        if (query == null) {
+            return "";
+        }
+        final StringBuilder builder = new StringBuilder();
 
-        for (Map.Entry<String, Object> entry : query.entrySet()) {
+        for (final Map.Entry<String, Object> entry : query.entrySet()) {
             if (builder.length() > 0) {
                 builder.append('&');
             }
 
             try {
                 builder.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-            } catch (UnsupportedEncodingException e) {
+            } catch (final UnsupportedEncodingException e) {
                 LOGGER.error("Unexpected exception building query", e);
             }
 
@@ -188,7 +194,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
                 builder.append('=');
                 try {
                     builder.append(URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
+                } catch (final UnsupportedEncodingException e) {
                     LOGGER.error("Unexpected exception building query", e);
                 }
             }
@@ -204,14 +210,14 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
      * @param query Query to append to URL
      * @return URL constructed
      */
-    public static URL concatenateURL(URL url, String query) {
+    public static URL concatenateURL(final URL url, final String query) {
         try {
             if (url.getQuery() != null && url.getQuery().length() > 0) {
                 return new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "&" + query);
             } else {
                 return new URL(url.getProtocol(), url.getHost(), url.getPort(), url.getFile() + "?" + query);
             }
-        } catch (MalformedURLException ex) {
+        } catch (final MalformedURLException ex) {
             throw new IllegalArgumentException("Could not concatenate given URL with GET arguments!", ex);
         }
     }

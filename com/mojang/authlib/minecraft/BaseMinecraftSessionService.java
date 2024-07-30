@@ -5,7 +5,7 @@ import com.mojang.authlib.AuthenticationService;
 public abstract class BaseMinecraftSessionService implements MinecraftSessionService {
     private final AuthenticationService authenticationService;
 
-    protected BaseMinecraftSessionService(AuthenticationService authenticationService) {
+    protected BaseMinecraftSessionService(final AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
     }
 

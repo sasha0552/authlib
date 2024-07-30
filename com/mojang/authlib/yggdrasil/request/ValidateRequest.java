@@ -6,7 +6,7 @@ public class ValidateRequest {
     private String clientToken;
     private String accessToken;
 
-    public ValidateRequest(YggdrasilUserAuthentication authenticationService) {
+    public ValidateRequest(final YggdrasilUserAuthentication authenticationService) {
         this.clientToken = authenticationService.getAuthenticationService().getClientToken();
         this.accessToken = authenticationService.getAuthenticatedToken();
     }

@@ -13,7 +13,7 @@ public interface AuthenticationService {
      * @throws java.lang.IllegalArgumentException Agent is null or not allowed for this AuthenticationService
      * @return New user authenticator
      */
-    public UserAuthentication createUserAuthentication(Agent agent);
+    UserAuthentication createUserAuthentication(Agent agent);
 
     /**
      * Creates a relevant {@link com.mojang.authlib.minecraft.MinecraftSessionService} designed for this authentication service.
@@ -22,12 +22,12 @@ public interface AuthenticationService {
      *
      * @return New minecraft session service
      */
-    public MinecraftSessionService createMinecraftSessionService();
+    MinecraftSessionService createMinecraftSessionService();
 
     /**
      * Creates a relevant {@link com.mojang.authlib.GameProfileRepository} designed for this authentication service.
      *
      * @return New profile repository
      */
-    public GameProfileRepository createProfileRepository();
+    GameProfileRepository createProfileRepository();
 }

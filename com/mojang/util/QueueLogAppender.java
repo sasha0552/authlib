@@ -26,7 +26,7 @@ public class QueueLogAppender extends AbstractAppender {
 
     private final BlockingQueue<String> queue;
 
-    public QueueLogAppender(String name, Filter filter, Layout<? extends Serializable> layout, boolean ignoreExceptions, BlockingQueue<String> queue) {
+    public QueueLogAppender(final String name, final Filter filter, final Layout<? extends Serializable> layout, final boolean ignoreExceptions, final BlockingQueue<String> queue) {
         super(name, filter, layout, ignoreExceptions);
         this.queue = queue;
     }
@@ -40,8 +40,8 @@ public class QueueLogAppender extends AbstractAppender {
     }
 
     @PluginFactory
-    public static QueueLogAppender createAppender(@PluginAttribute("name") String name, @PluginAttribute("ignoreExceptions") String ignore, @PluginElement("Layout") Layout<? extends Serializable> layout, @PluginElement("Filters") Filter filter, @PluginAttribute("target") String target) {
-        boolean ignoreExceptions = Boolean.parseBoolean(ignore);
+    public static QueueLogAppender createAppender(@PluginAttribute("name") final String name, @PluginAttribute("ignoreExceptions") final String ignore, @PluginElement("Layout") Layout<? extends Serializable> layout, @PluginElement("Filters") final Filter filter, @PluginAttribute("target") String target) {
+        final boolean ignoreExceptions = Boolean.parseBoolean(ignore);
 
         if (name == null) {
             LOGGER.error("No name provided for QueueLogAppender");
@@ -67,15 +67,16 @@ public class QueueLogAppender extends AbstractAppender {
         return new QueueLogAppender(name, filter, layout, ignoreExceptions, queue);
     }
 
-    public static String getNextLogEvent(String queueName) {
+    public static String getNextLogEvent(final String queueName) {
         QUEUE_LOCK.readLock().lock();
-        BlockingQueue<String> queue = QUEUES.get(queueName);
+        final BlockingQueue<String> queue = QUEUES.get(queueName);
         QUEUE_LOCK.readLock().unlock();
 
         if (queue != null) {
             try {
                 return queue.take();
-            } catch (InterruptedException ignored) {}
+            } catch (final InterruptedException ignored) {
+            }
         }
 
         return null;

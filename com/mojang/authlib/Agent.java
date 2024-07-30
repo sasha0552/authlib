@@ -7,7 +7,7 @@ public class Agent {
     private final String name;
     private final int version;
 
-    public Agent(String name, int version) {
+    public Agent(final String name, final int version) {
         this.name = name;
         this.version = version;
     }
@@ -23,8 +23,8 @@ public class Agent {
     @Override
     public String toString() {
         return "Agent{" +
-                "name='" + name + '\'' +
-                ", version=" + version +
-                '}';
+            "name='" + name + '\'' +
+            ", version=" + version +
+            '}';
     }
 }

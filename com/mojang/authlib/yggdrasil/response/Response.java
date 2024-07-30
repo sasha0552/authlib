@@ -17,15 +17,15 @@ public class Response {
         return errorMessage;
     }
 
-    protected void setError(String error) {
+    protected void setError(final String error) {
         this.error = error;
     }
 
-    protected void setErrorMessage(String errorMessage) {
+    protected void setErrorMessage(final String errorMessage) {
         this.errorMessage = errorMessage;
     }
 
-    protected void setCause(String cause) {
+    protected void setCause(final String cause) {
         this.cause = cause;
     }
 }

@@ -4,15 +4,15 @@ public class AuthenticationUnavailableException extends AuthenticationException 
     public AuthenticationUnavailableException() {
     }
 
-    public AuthenticationUnavailableException(String message) {
+    public AuthenticationUnavailableException(final String message) {
         super(message);
     }
 
-    public AuthenticationUnavailableException(String message, Throwable cause) {
+    public AuthenticationUnavailableException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
-    public AuthenticationUnavailableException(Throwable cause) {
+    public AuthenticationUnavailableException(final Throwable cause) {
         super(cause);
     }
 }

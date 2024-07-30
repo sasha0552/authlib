@@ -31,7 +31,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
     private GameProfile selectedProfile;
     private UserType userType;
 
-    protected BaseUserAuthentication(AuthenticationService authenticationService) {
+    protected BaseUserAuthentication(final AuthenticationService authenticationService) {
         Validate.notNull(authenticationService);
         this.authenticationService = authenticationService;
     }
@@ -56,7 +56,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
     }
 
     @Override
-    public void setUsername(String username) {
+    public void setUsername(final String username) {
         if (isLoggedIn() && canPlayOnline()) {
             throw new IllegalStateException("Cannot change username whilst logged in & online");
         }
@@ -65,7 +65,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
     }
 
     @Override
-    public void setPassword(String password) {
+    public void setPassword(final String password) {
         if (isLoggedIn() && canPlayOnline() && StringUtils.isNotBlank(password)) {
             throw new IllegalStateException("Cannot set password whilst logged in & online");
         }
@@ -83,7 +83,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void loadFromStorage(Map<String, Object> credentials) {
+    public void loadFromStorage(final Map<String, Object> credentials) {
         logOut();
 
         setUsername(String.valueOf(credentials.get(STORAGE_KEY_USER_NAME)));
@@ -96,12 +96,12 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
 
         if (credentials.containsKey(STORAGE_KEY_USER_PROPERTIES)) {
             try {
-                List<Map<String, String>> list = (List<Map<String, String>>) credentials.get(STORAGE_KEY_USER_PROPERTIES);
+                final List<Map<String, String>> list = (List<Map<String, String>>) credentials.get(STORAGE_KEY_USER_PROPERTIES);
 
-                for (Map<String, String> propertyMap : list) {
-                    String name = propertyMap.get("name");
-                    String value = propertyMap.get("value");
-                    String signature = propertyMap.get("signature");
+                for (final Map<String, String> propertyMap : list) {
+                    final String name = propertyMap.get("name");
+                    final String value = propertyMap.get("value");
+                    final String signature = propertyMap.get("signature");
 
                     if (signature == null) {
                         getModifiableUserProperties().put(name, new Property(name, value));
@@ -109,20 +109,20 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
                         getModifiableUserProperties().put(name, new Property(name, value, signature));
                     }
                 }
-            } catch (Throwable t) {
+            } catch (final Throwable t) {
                 LOGGER.warn("Couldn't deserialize user properties", t);
             }
         }
 
         if (credentials.containsKey(STORAGE_KEY_PROFILE_NAME) && credentials.containsKey(STORAGE_KEY_PROFILE_ID)) {
-            GameProfile profile = new GameProfile(UUIDTypeAdapter.fromString(String.valueOf(credentials.get(STORAGE_KEY_PROFILE_ID))), String.valueOf(credentials.get(STORAGE_KEY_PROFILE_NAME)));
+            final GameProfile profile = new GameProfile(UUIDTypeAdapter.fromString(String.valueOf(credentials.get(STORAGE_KEY_PROFILE_ID))), String.valueOf(credentials.get(STORAGE_KEY_PROFILE_NAME)));
             if (credentials.containsKey(STORAGE_KEY_PROFILE_PROPERTIES)) {
                 try {
-                    List<Map<String, String>> list = (List<Map<String, String>>) credentials.get(STORAGE_KEY_PROFILE_PROPERTIES);
-                    for (Map<String, String> propertyMap : list) {
-                        String name = propertyMap.get("name");
-                        String value = propertyMap.get("value");
-                        String signature = propertyMap.get("signature");
+                    final List<Map<String, String>> list = (List<Map<String, String>>) credentials.get(STORAGE_KEY_PROFILE_PROPERTIES);
+                    for (final Map<String, String> propertyMap : list) {
+                        final String name = propertyMap.get("name");
+                        final String value = propertyMap.get("value");
+                        final String signature = propertyMap.get("signature");
 
                         if (signature == null) {
                             profile.getProperties().put(name, new Property(name, value));
@@ -130,7 +130,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
                             profile.getProperties().put(name, new Property(name, value, signature));
                         }
                     }
-                } catch (Throwable t) {
+                } catch (final Throwable t) {
                     LOGGER.warn("Couldn't deserialize profile properties", t);
                 }
             }
@@ -140,7 +140,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
 
     @Override
     public Map<String, Object> saveForStorage() {
-        Map<String, Object> result = new HashMap<String, Object>();
+        final Map<String, Object> result = new HashMap<String, Object>();
 
         if (getUsername() != null) {
             result.put(STORAGE_KEY_USER_NAME, getUsername());
@@ -152,9 +152,9 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
         }
 
         if (!getUserProperties().isEmpty()) {
-            List<Map<String, String>> properties = new ArrayList<Map<String, String>>();
-            for (Property userProperty : getUserProperties().values()) {
-                Map<String, String> property = new HashMap<String, String>();
+            final List<Map<String, String>> properties = new ArrayList<Map<String, String>>();
+            for (final Property userProperty : getUserProperties().values()) {
+                final Map<String, String> property = new HashMap<String, String>();
                 property.put("name", userProperty.getName());
                 property.put("value", userProperty.getValue());
                 property.put("signature", userProperty.getSignature());
@@ -163,14 +163,14 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
             result.put(STORAGE_KEY_USER_PROPERTIES, properties);
         }
 
-        GameProfile selectedProfile = getSelectedProfile();
+        final GameProfile selectedProfile = getSelectedProfile();
         if (selectedProfile != null) {
             result.put(STORAGE_KEY_PROFILE_NAME, selectedProfile.getName());
             result.put(STORAGE_KEY_PROFILE_ID, selectedProfile.getId());
 
-            List<Map<String, String>> properties = new ArrayList<Map<String, String>>();
-            for (Property profileProperty : selectedProfile.getProperties().values()) {
-                Map<String, String> property = new HashMap<String, String>();
+            final List<Map<String, String>> properties = new ArrayList<Map<String, String>>();
+            for (final Property profileProperty : selectedProfile.getProperties().values()) {
+                final Map<String, String> property = new HashMap<String, String>();
                 property.put("name", profileProperty.getName());
                 property.put("value", profileProperty.getValue());
                 property.put("signature", profileProperty.getSignature());
@@ -185,7 +185,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
         return result;
     }
 
-    protected void setSelectedProfile(GameProfile selectedProfile) {
+    protected void setSelectedProfile(final GameProfile selectedProfile) {
         this.selectedProfile = selectedProfile;
     }
 
@@ -196,7 +196,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
 
     @Override
     public String toString() {
-        StringBuilder result = new StringBuilder();
+        final StringBuilder result = new StringBuilder();
 
         result.append(getClass().getSimpleName());
         result.append("{");
@@ -237,7 +237,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
     @Override
     public PropertyMap getUserProperties() {
         if (isLoggedIn()) {
-            PropertyMap result = new PropertyMap();
+            final PropertyMap result = new PropertyMap();
             result.putAll(getModifiableUserProperties());
             return result;
         } else {
@@ -258,11 +258,11 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
         }
     }
 
-    protected void setUserType(UserType userType) {
+    protected void setUserType(final UserType userType) {
         this.userType = userType;
     }
 
-    protected void setUserid(String userid) {
+    protected void setUserid(final String userid) {
         this.userid = userid;
     }
 }

@@ -1,7 +1,7 @@
 package com.mojang.authlib;
 
 public abstract class HttpUserAuthentication extends BaseUserAuthentication {
-    protected HttpUserAuthentication(HttpAuthenticationService authenticationService) {
+    protected HttpUserAuthentication(final HttpAuthenticationService authenticationService) {
         super(authenticationService);
     }
 

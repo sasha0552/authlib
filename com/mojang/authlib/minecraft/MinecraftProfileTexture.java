@@ -13,13 +13,13 @@ public class MinecraftProfileTexture {
         ELYTRA
         ;
     }
-    
+
     public static final int PROFILE_TEXTURE_COUNT = Type.values().length;
 
     private final String url;
     private final Map<String, String> metadata;
 
-    public MinecraftProfileTexture(String url, Map<String, String> metadata) {
+    public MinecraftProfileTexture(final String url, final Map<String, String> metadata) {
         this.url = url;
         this.metadata = metadata;
     }
@@ -29,7 +29,7 @@ public class MinecraftProfileTexture {
     }
 
     @Nullable
-    public String getMetadata(String key) {
+    public String getMetadata(final String key) {
         if (metadata == null) {
             return null;
         }
@@ -43,8 +43,8 @@ public class MinecraftProfileTexture {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("url", url)
-                .append("hash", getHash())
-                .toString();
+            .append("url", url)
+            .append("hash", getHash())
+            .toString();
     }
 }

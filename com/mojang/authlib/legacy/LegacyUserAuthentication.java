@@ -26,7 +26,7 @@ public class LegacyUserAuthentication extends HttpUserAuthentication {
 
     private String sessionToken;
 
-    protected LegacyUserAuthentication(LegacyAuthenticationService authenticationService) {
+    protected LegacyUserAuthentication(final LegacyAuthenticationService authenticationService) {
         super(authenticationService);
     }
 
@@ -39,24 +39,24 @@ public class LegacyUserAuthentication extends HttpUserAuthentication {
             throw new InvalidCredentialsException("Invalid password");
         }
 
-        Map<String, Object> args = new HashMap<String, Object>();
+        final Map<String, Object> args = new HashMap<String, Object>();
         args.put("user", getUsername());
         args.put("password", getPassword());
         args.put("version", AUTHENTICATION_VERSION);
-        String response;
+        final String response;
 
         try {
             response = getAuthenticationService().performPostRequest(AUTHENTICATION_URL, HttpAuthenticationService.buildQuery(args), "application/x-www-form-urlencoded").trim();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new AuthenticationException("Authentication server is not responding", e);
         }
 
-        String[] split = response.split(":");
+        final String[] split = response.split(":");
 
         if (split.length == 5) {
-            String profileId = split[RESPONSE_PART_PROFILE_ID];
-            String profileName = split[RESPONSE_PART_PROFILE_NAME];
-            String sessionToken = split[RESPONSE_PART_SESSION_TOKEN];
+            final String profileId = split[RESPONSE_PART_PROFILE_ID];
+            final String profileName = split[RESPONSE_PART_PROFILE_NAME];
+            final String sessionToken = split[RESPONSE_PART_SESSION_TOKEN];
 
             if (StringUtils.isBlank(profileId) || StringUtils.isBlank(profileName) || StringUtils.isBlank(sessionToken)) {
                 throw new AuthenticationException("Unknown response from authentication server: " + response);
@@ -84,7 +84,7 @@ public class LegacyUserAuthentication extends HttpUserAuthentication {
     @Override
     public GameProfile[] getAvailableProfiles() {
         if (getSelectedProfile() != null) {
-            return new GameProfile[] {getSelectedProfile()};
+            return new GameProfile[]{getSelectedProfile()};
         } else {
             return new GameProfile[0];
         }
@@ -96,7 +96,7 @@ public class LegacyUserAuthentication extends HttpUserAuthentication {
      * Attempts to call this method will fail.
      */
     @Override
-    public void selectGameProfile(GameProfile profile) throws AuthenticationException {
+    public void selectGameProfile(final GameProfile profile) throws AuthenticationException {
         throw new UnsupportedOperationException("Game profiles cannot be changed in the legacy authentication service");
     }
 

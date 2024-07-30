@@ -9,11 +9,11 @@ public class RefreshRequest {
     private GameProfile selectedProfile;
     private boolean requestUser = true;
 
-    public RefreshRequest(YggdrasilUserAuthentication authenticationService) {
+    public RefreshRequest(final YggdrasilUserAuthentication authenticationService) {
         this(authenticationService, null);
     }
 
-    public RefreshRequest(YggdrasilUserAuthentication authenticationService, GameProfile profile) {
+    public RefreshRequest(final YggdrasilUserAuthentication authenticationService, final GameProfile profile) {
         this.clientToken = authenticationService.getAuthenticationService().getClientToken();
         this.accessToken = authenticationService.getAuthenticatedToken();
         this.selectedProfile = profile;

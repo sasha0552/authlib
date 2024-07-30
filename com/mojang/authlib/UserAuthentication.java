@@ -1,8 +1,6 @@
 package com.mojang.authlib;
 
-import com.google.common.collect.Multimap;
 import com.mojang.authlib.exceptions.AuthenticationException;
-import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 
 import java.util.Map;
@@ -137,7 +135,7 @@ public interface UserAuthentication {
      *
      * @return Authenticated token for the current user, or null if not logged in.
      */
-    public String getAuthenticatedToken();
+    String getAuthenticatedToken();
 
     /**
      * Gets the unique ID of the currently logged in user.
@@ -146,7 +144,7 @@ public interface UserAuthentication {
      *
      * @return Unique ID of the currently logged in user, or null if not logged in
      */
-    public String getUserID();
+    String getUserID();
 
     /**
      * Gets a Multimap of properties bound to the currently logged in user.
@@ -157,7 +155,7 @@ public interface UserAuthentication {
      *
      * @return Multimap of user properties.
      */
-    public PropertyMap getUserProperties();
+    PropertyMap getUserProperties();
 
     /**
      * Gets the type of the currently logged in user.
@@ -166,5 +164,5 @@ public interface UserAuthentication {
      *
      * @return Type of current logged in user, or null.
      */
-    public UserType getUserType();
+    UserType getUserType();
 }

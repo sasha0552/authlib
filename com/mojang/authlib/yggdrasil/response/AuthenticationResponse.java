@@ -28,5 +28,4 @@ public class AuthenticationResponse extends Response {
     public User getUser() {
         return user;
     }
-
 }

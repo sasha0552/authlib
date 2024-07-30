@@ -16,7 +16,7 @@ public class LegacyAuthenticationService extends HttpAuthenticationService {
      * @param proxy Proxy to route all HTTP(s) requests through.
      * @throws java.lang.IllegalArgumentException Proxy is null
      */
-    protected LegacyAuthenticationService(Proxy proxy) {
+    protected LegacyAuthenticationService(final Proxy proxy) {
         super(proxy);
     }
 
@@ -30,9 +30,11 @@ public class LegacyAuthenticationService extends HttpAuthenticationService {
      * @return New user authenticator
      */
     @Override
-    public LegacyUserAuthentication createUserAuthentication(Agent agent) {
+    public LegacyUserAuthentication createUserAuthentication(final Agent agent) {
         Validate.notNull(agent);
-        if (agent != Agent.MINECRAFT) throw new IllegalArgumentException("Legacy authentication cannot handle anything but Minecraft");
+        if (agent != Agent.MINECRAFT) {
+            throw new IllegalArgumentException("Legacy authentication cannot handle anything but Minecraft");
+        }
         return new LegacyUserAuthentication(this);
     }
 

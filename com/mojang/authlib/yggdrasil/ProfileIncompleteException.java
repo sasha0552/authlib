@@ -4,15 +4,15 @@ public class ProfileIncompleteException extends RuntimeException {
     public ProfileIncompleteException() {
     }
 
-    public ProfileIncompleteException(String message) {
+    public ProfileIncompleteException(final String message) {
         super(message);
     }
 
-    public ProfileIncompleteException(String message, Throwable cause) {
+    public ProfileIncompleteException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
-    public ProfileIncompleteException(Throwable cause) {
+    public ProfileIncompleteException(final Throwable cause) {
         super(cause);
     }
 }

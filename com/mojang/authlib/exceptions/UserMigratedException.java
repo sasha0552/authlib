@@ -4,15 +4,15 @@ public class UserMigratedException extends InvalidCredentialsException {
     public UserMigratedException() {
     }
 
-    public UserMigratedException(String message) {
+    public UserMigratedException(final String message) {
         super(message);
     }
 
-    public UserMigratedException(String message, Throwable cause) {
+    public UserMigratedException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
-    public UserMigratedException(Throwable cause) {
+    public UserMigratedException(final Throwable cause) {
         super(cause);
     }
 }

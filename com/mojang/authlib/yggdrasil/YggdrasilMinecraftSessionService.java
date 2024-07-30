@@ -27,6 +27,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -51,30 +52,30 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     private final PublicKey publicKey;
     private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
     private final LoadingCache<GameProfile, GameProfile> insecureProfiles = CacheBuilder
-            .newBuilder()
-            .expireAfterWrite(6, TimeUnit.HOURS)
-            .build(new CacheLoader<GameProfile, GameProfile>() {
-                @Override
-                public GameProfile load(GameProfile key) throws Exception {
-                    return fillGameProfile(key, false);
-                }
-            });
+        .newBuilder()
+        .expireAfterWrite(6, TimeUnit.HOURS)
+        .build(new CacheLoader<GameProfile, GameProfile>() {
+            @Override
+            public GameProfile load(final GameProfile key) throws Exception {
+                return fillGameProfile(key, false);
+            }
+        });
 
-    protected YggdrasilMinecraftSessionService(YggdrasilAuthenticationService authenticationService) {
+    protected YggdrasilMinecraftSessionService(final YggdrasilAuthenticationService authenticationService) {
         super(authenticationService);
 
         try {
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(IOUtils.toByteArray(YggdrasilMinecraftSessionService.class.getResourceAsStream("/yggdrasil_session_pubkey.der")));
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            final X509EncodedKeySpec spec = new X509EncodedKeySpec(IOUtils.toByteArray(YggdrasilMinecraftSessionService.class.getResourceAsStream("/yggdrasil_session_pubkey.der")));
+            final KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             publicKey = keyFactory.generatePublic(spec);
-        } catch (Exception e) {
+        } catch (final Exception ignored) {
             throw new Error("Missing/invalid yggdrasil public key!");
         }
     }
 
     @Override
-    public void joinServer(GameProfile profile, String authenticationToken, String serverId) throws AuthenticationException {
-        JoinMinecraftServerRequest request = new JoinMinecraftServerRequest();
+    public void joinServer(final GameProfile profile, final String authenticationToken, final String serverId) throws AuthenticationException {
+        final JoinMinecraftServerRequest request = new JoinMinecraftServerRequest();
         request.accessToken = authenticationToken;
         request.selectedProfile = profile.getId();
         request.serverId = serverId;
@@ -83,19 +84,23 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     }
 
     @Override
-    public GameProfile hasJoinedServer(GameProfile user, String serverId) throws AuthenticationUnavailableException {
-        Map<String, Object> arguments = new HashMap<String, Object>();
+    public GameProfile hasJoinedServer(final GameProfile user, final String serverId, final InetAddress address) throws AuthenticationUnavailableException {
+        final Map<String, Object> arguments = new HashMap<String, Object>();
 
         arguments.put("username", user.getName());
         arguments.put("serverId", serverId);
 
-        URL url = HttpAuthenticationService.concatenateURL(CHECK_URL, HttpAuthenticationService.buildQuery(arguments));
+        if (address != null) {
+            arguments.put("ip", address.getHostAddress());
+        }
+
+        final URL url = HttpAuthenticationService.concatenateURL(CHECK_URL, HttpAuthenticationService.buildQuery(arguments));
 
         try {
-            HasJoinedMinecraftServerResponse response = getAuthenticationService().makeRequest(url, null, HasJoinedMinecraftServerResponse.class);
+            final HasJoinedMinecraftServerResponse response = getAuthenticationService().makeRequest(url, null, HasJoinedMinecraftServerResponse.class);
 
             if (response != null && response.getId() != null) {
-                GameProfile result = new GameProfile(response.getId(), user.getName());
+                final GameProfile result = new GameProfile(response.getId(), user.getName());
 
                 if (response.getProperties() != null) {
                     result.getProperties().putAll(response.getProperties());
@@ -105,16 +110,16 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             } else {
                 return null;
             }
-        } catch (AuthenticationUnavailableException e) {
+        } catch (final AuthenticationUnavailableException e) {
             throw e;
-        } catch (AuthenticationException e) {
+        } catch (final AuthenticationException ignored) {
             return null;
         }
     }
 
     @Override
-    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile, boolean requireSecure) {
-        Property textureProperty = Iterables.getFirst(profile.getProperties().get("textures"), null);
+    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(final GameProfile profile, final boolean requireSecure) {
+        final Property textureProperty = Iterables.getFirst(profile.getProperties().get("textures"), null);
 
         if (textureProperty == null) {
             return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
@@ -132,11 +137,11 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             }
         }
 
-        MinecraftTexturesPayload result;
+        final MinecraftTexturesPayload result;
         try {
-            String json = new String(Base64.decodeBase64(textureProperty.getValue()), Charsets.UTF_8);
+            final String json = new String(Base64.decodeBase64(textureProperty.getValue()), Charsets.UTF_8);
             result = gson.fromJson(json, MinecraftTexturesPayload.class);
-        } catch (JsonParseException e) {
+        } catch (final JsonParseException e) {
             LOGGER.error("Could not decode textures payload", e);
             return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
         }
@@ -145,7 +150,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
         }
 
-        for (Map.Entry<MinecraftProfileTexture.Type, MinecraftProfileTexture> entry : result.getTextures().entrySet()) {
+        for (final Map.Entry<MinecraftProfileTexture.Type, MinecraftProfileTexture> entry : result.getTextures().entrySet()) {
             if (!isWhitelistedDomain(entry.getValue().getUrl())) {
                 LOGGER.error("Textures payload has been tampered with (non-whitelisted domain)");
                 return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
@@ -156,7 +161,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     }
 
     @Override
-    public GameProfile fillProfileProperties(GameProfile profile, boolean requireSecure) {
+    public GameProfile fillProfileProperties(final GameProfile profile, final boolean requireSecure) {
         if (profile.getId() == null) {
             return profile;
         }
@@ -168,23 +173,23 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         return fillGameProfile(profile, true);
     }
 
-    protected GameProfile fillGameProfile(GameProfile profile, boolean requireSecure) {
+    protected GameProfile fillGameProfile(final GameProfile profile, final boolean requireSecure) {
         try {
             URL url = HttpAuthenticationService.constantURL(BASE_URL + "profile/" + UUIDTypeAdapter.fromUUID(profile.getId()));
             url = HttpAuthenticationService.concatenateURL(url, "unsigned=" + !requireSecure);
-            MinecraftProfilePropertiesResponse response = getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
+            final MinecraftProfilePropertiesResponse response = getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
 
             if (response == null) {
                 LOGGER.debug("Couldn't fetch profile properties for " + profile + " as the profile does not exist");
                 return profile;
             } else {
-                GameProfile result = new GameProfile(response.getId(), response.getName());
+                final GameProfile result = new GameProfile(response.getId(), response.getName());
                 result.getProperties().putAll(response.getProperties());
                 profile.getProperties().putAll(response.getProperties());
                 LOGGER.debug("Successfully fetched profile properties for " + profile);
                 return result;
             }
-        } catch (AuthenticationException e) {
+        } catch (final AuthenticationException e) {
             LOGGER.warn("Couldn't look up profile properties for " + profile, e);
             return profile;
         }
@@ -195,16 +200,16 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         return (YggdrasilAuthenticationService) super.getAuthenticationService();
     }
 
-    private static boolean isWhitelistedDomain(String url) {
+    private static boolean isWhitelistedDomain(final String url) {
         URI uri = null;
 
         try {
             uri = new URI(url);
-        } catch (URISyntaxException e) {
+        } catch (final URISyntaxException ignored) {
             throw new IllegalArgumentException("Invalid URL '" + url + "'");
         }
 
-        String domain = uri.getHost();
+        final String domain = uri.getHost();
 
         for (int i = 0; i < WHITELISTED_DOMAINS.length; i++) {
             if (domain.endsWith(WHITELISTED_DOMAINS[i])) {

@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.UUID;
 
 public class InsecureTextureException extends RuntimeException {
-    public InsecureTextureException(String message) {
+    public InsecureTextureException(final String message) {
         super(message);
     }
 
@@ -15,7 +15,7 @@ public class InsecureTextureException extends RuntimeException {
         private final Date validFrom;
         private final Calendar limit;
 
-        public OutdatedTextureException(Date validFrom, Calendar limit) {
+        public OutdatedTextureException(final Date validFrom, final Calendar limit) {
             super("Decrypted textures payload is too old (" + validFrom + ", but we need it to be at least " + limit + ")");
             this.validFrom = validFrom;
             this.limit = limit;
@@ -27,7 +27,7 @@ public class InsecureTextureException extends RuntimeException {
         private final UUID resultId;
         private final String resultName;
 
-        public WrongTextureOwnerException(GameProfile expected, UUID resultId, String resultName) {
+        public WrongTextureOwnerException(final GameProfile expected, final UUID resultId, final String resultName) {
             super("Decrypted textures payload was for another user (expected " + expected.getId() + "/" + expected.getName() + " but was for " + resultId + "/" + resultName + ")");
             this.expected = expected;
             this.resultId = resultId;

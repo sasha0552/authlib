@@ -4,15 +4,15 @@ public class InvalidCredentialsException extends AuthenticationException {
     public InvalidCredentialsException() {
     }
 
-    public InvalidCredentialsException(String message) {
+    public InvalidCredentialsException(final String message) {
         super(message);
     }
 
-    public InvalidCredentialsException(String message, Throwable cause) {
+    public InvalidCredentialsException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
-    public InvalidCredentialsException(Throwable cause) {
+    public InvalidCredentialsException(final Throwable cause) {
         super(cause);
     }
 }

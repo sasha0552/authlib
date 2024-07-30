@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 
+import java.net.InetAddress;
 import java.util.Map;
 
 public interface MinecraftSessionService {
@@ -12,7 +13,7 @@ public interface MinecraftSessionService {
      * <p />
      * The {@link com.mojang.authlib.GameProfile} used to join with may be partial, but the exact requirements will vary on
      * authentication service. If this method returns without throwing an exception, the join was successful and a subsequent call to
-     * {@link #hasJoinedServer(com.mojang.authlib.GameProfile, String)} will return true.
+     * {@link #hasJoinedServer(GameProfile, String, InetAddress)} will return true.
      *
      * @param profile Partial {@link com.mojang.authlib.GameProfile} to join as
      * @param authenticationToken The {@link com.mojang.authlib.UserAuthentication#getAuthenticatedToken() authenticated token} of the user
@@ -21,7 +22,7 @@ public interface MinecraftSessionService {
      * @throws com.mojang.authlib.exceptions.InvalidCredentialsException Thrown when the specified authenticationToken is invalid
      * @throws com.mojang.authlib.exceptions.AuthenticationException Generic exception indicating that we could not authenticate the user
      */
-    public void joinServer(GameProfile profile, String authenticationToken, String serverId) throws AuthenticationException;
+    void joinServer(GameProfile profile, String authenticationToken, String serverId) throws AuthenticationException;
 
     /**
      * Checks if the specified user has joined a Minecraft server.
@@ -29,12 +30,13 @@ public interface MinecraftSessionService {
      * The {@link com.mojang.authlib.GameProfile} used to join with may be partial, but the exact requirements will vary on
      * authentication service.
      *
-     * @param user Partial {@link com.mojang.authlib.GameProfile} to check for
+     * @param user Partial {@link GameProfile} to check for
      * @param serverId The random ID of the server to check for
+     * @param address The address connected from
      * @throws com.mojang.authlib.exceptions.AuthenticationUnavailableException Thrown when the servers return a malformed response, or are otherwise unavailable
      * @return Full game profile if the user had joined, otherwise null
      */
-    public GameProfile hasJoinedServer(GameProfile user, String serverId) throws AuthenticationUnavailableException;
+    GameProfile hasJoinedServer(GameProfile user, String serverId, InetAddress address) throws AuthenticationUnavailableException;
 
     /**
      * Gets a map of all known textures from a {@link com.mojang.authlib.GameProfile}.
@@ -46,7 +48,7 @@ public interface MinecraftSessionService {
      * @return Map of texture types to textures.
      * @throws com.mojang.authlib.minecraft.InsecureTextureException If requireSecure is true and the data is insecure
      */
-    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile, boolean requireSecure);
+    Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile, boolean requireSecure);
 
     /**
      * Fills a profile with all known properties from the session service.
@@ -57,5 +59,5 @@ public interface MinecraftSessionService {
      * @param requireSecure If you require verifiable correct data.
      * @return Filled profile for the previous user.
      */
-    public GameProfile fillProfileProperties(GameProfile profile, boolean requireSecure);
+    GameProfile fillProfileProperties(GameProfile profile, boolean requireSecure);
 }

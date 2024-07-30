@@ -10,7 +10,7 @@ public class AuthenticationRequest {
     private String clientToken;
     private boolean requestUser = true;
 
-    public AuthenticationRequest(YggdrasilUserAuthentication authenticationService, String username, String password) {
+    public AuthenticationRequest(final YggdrasilUserAuthentication authenticationService, final String username, final String password) {
         this.agent = authenticationService.getAgent();
         this.username = username;
         this.clientToken = authenticationService.getAuthenticationService().getClientToken();

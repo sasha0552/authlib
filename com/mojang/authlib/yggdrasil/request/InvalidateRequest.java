@@ -6,7 +6,7 @@ public class InvalidateRequest {
     private String accessToken;
     private String clientToken;
 
-    public InvalidateRequest(YggdrasilUserAuthentication authenticationService) {
+    public InvalidateRequest(final YggdrasilUserAuthentication authenticationService) {
         this.accessToken = authenticationService.getAuthenticatedToken();
         this.clientToken = authenticationService.getAuthenticationService().getClientToken();
     }

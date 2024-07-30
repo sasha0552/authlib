@@ -1,7 +1,19 @@
 package com.mojang.authlib.yggdrasil;
 
-import com.google.gson.*;
-import com.mojang.authlib.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import com.mojang.authlib.Agent;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.GameProfileRepository;
+import com.mojang.authlib.HttpAuthenticationService;
+import com.mojang.authlib.UserAuthentication;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
@@ -23,10 +35,10 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     private final String clientToken;
     private final Gson gson;
 
-    public YggdrasilAuthenticationService(Proxy proxy, String clientToken) {
+    public YggdrasilAuthenticationService(final Proxy proxy, final String clientToken) {
         super(proxy);
         this.clientToken = clientToken;
-        GsonBuilder builder = new GsonBuilder();
+        final GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(GameProfile.class, new GameProfileSerializer());
         builder.registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer());
         builder.registerTypeAdapter(UUID.class, new UUIDTypeAdapter());
@@ -35,7 +47,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     }
 
     @Override
-    public UserAuthentication createUserAuthentication(Agent agent) {
+    public UserAuthentication createUserAuthentication(final Agent agent) {
         return new YggdrasilUserAuthentication(this, agent);
     }
 
@@ -49,17 +61,19 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         return new YggdrasilGameProfileRepository(this);
     }
 
-    protected <T extends Response> T makeRequest(URL url, Object input, Class<T> classOfT) throws AuthenticationException {
+    protected <T extends Response> T makeRequest(final URL url, final Object input, final Class<T> classOfT) throws AuthenticationException {
         try {
-            String jsonResult = input == null ? performGetRequest(url) : performPostRequest(url, gson.toJson(input), "application/json");
-            T result = gson.fromJson(jsonResult, classOfT);
+            final String jsonResult = input == null ? performGetRequest(url) : performPostRequest(url, gson.toJson(input), "application/json");
+            final T result = gson.fromJson(jsonResult, classOfT);
 
-            if (result == null) return null;
+            if (result == null) {
+                return null;
+            }
 
             if (StringUtils.isNotBlank(result.getError())) {
                 if ("UserMigratedException".equals(result.getCause())) {
                     throw new UserMigratedException(result.getErrorMessage());
-                } else if (result.getError().equals("ForbiddenOperationException")) {
+                } else if ("ForbiddenOperationException".equals(result.getError())) {
                     throw new InvalidCredentialsException(result.getErrorMessage());
                 } else {
                     throw new AuthenticationException(result.getErrorMessage());
@@ -67,11 +81,11 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
             }
 
             return result;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
-        } catch (IllegalStateException e) {
+        } catch (final IllegalStateException e) {
             throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
-        } catch (JsonParseException e) {
+        } catch (final JsonParseException e) {
             throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
         }
     }
@@ -82,18 +96,22 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
 
     private static class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
         @Override
-        public GameProfile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            JsonObject object = (JsonObject) json;
-            UUID id = object.has("id") ? context.<UUID>deserialize(object.get("id"), UUID.class) : null;
-            String name = object.has("name") ? object.getAsJsonPrimitive("name").getAsString() : null;
+        public GameProfile deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
+            final JsonObject object = (JsonObject) json;
+            final UUID id = object.has("id") ? context.<UUID>deserialize(object.get("id"), UUID.class) : null;
+            final String name = object.has("name") ? object.getAsJsonPrimitive("name").getAsString() : null;
             return new GameProfile(id, name);
         }
 
         @Override
-        public JsonElement serialize(GameProfile src, Type typeOfSrc, JsonSerializationContext context) {
-            JsonObject result = new JsonObject();
-            if (src.getId() != null) result.add("id", context.serialize(src.getId()));
-            if (src.getName() != null) result.addProperty("name", src.getName());
+        public JsonElement serialize(final GameProfile src, final Type typeOfSrc, final JsonSerializationContext context) {
+            final JsonObject result = new JsonObject();
+            if (src.getId() != null) {
+                result.add("id", context.serialize(src.getId()));
+            }
+            if (src.getName() != null) {
+                result.addProperty("name", src.getName());
+            }
             return result;
         }
     }
