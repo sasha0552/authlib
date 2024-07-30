@@ -11,14 +11,14 @@ import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.ProfileLookupCallback;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Set;
 
 public class YggdrasilGameProfileRepository implements GameProfileRepository {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(YggdrasilGameProfileRepository.class);
     private final String searchPageUrl;
     private static final int ENTRIES_PER_PAGE = 2;
     private static final int MAX_FAIL_COUNT = 3;

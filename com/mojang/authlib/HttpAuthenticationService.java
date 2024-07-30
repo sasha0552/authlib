@@ -2,8 +2,8 @@ package com.mojang.authlib;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public abstract class HttpAuthenticationService extends BaseAuthenticationService {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpAuthenticationService.class);
 
     private final Proxy proxy;
 
@@ -52,7 +52,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
      * <p />
      * The POST data will be encoded in UTF-8 as the specified contentType. The response will be parsed as UTF-8.
      * If the server returns an error but still provides a body, the body will be returned as normal.
-     * If the server returns an error without any body, a relevant {@link java.io.IOException} will be thrown.
+     * If the server returns an error without any body, a relevant {@link IOException} will be thrown.
      *
      * @param url URL to submit the POST request to
      * @param post POST data in the correct format to be submitted
@@ -118,7 +118,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
      * <p />
      * The response will be parsed as UTF-8.
      * If the server returns an error but still provides a body, the body will be returned as normal.
-     * If the server returns an error without any body, a relevant {@link java.io.IOException} will be thrown.
+     * If the server returns an error without any body, a relevant {@link IOException} will be thrown.
      *
      * @param url URL to submit the GET request to
      * @param authentication The authentication to provide, if any
@@ -162,7 +162,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     }
 
     /**
-     * Creates a {@link URL} with the specified string, throwing an {@link java.lang.Error} if the URL was malformed.
+     * Creates a {@link URL} with the specified string, throwing an {@link Error} if the URL was malformed.
      * <p />
      * This is just a wrapper to allow URLs to be created in constants, where you know the URL is valid.
      *
@@ -214,7 +214,7 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
     }
 
     /**
-     * Concatenates the given {@link java.net.URL} and query.
+     * Concatenates the given {@link URL} and query.
      *
      * @param url URL to base off
      * @param query Query to append to URL

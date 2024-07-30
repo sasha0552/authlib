@@ -6,8 +6,8 @@ import com.mojang.authlib.exceptions.MinecraftClientHttpException;
 import com.mojang.authlib.yggdrasil.response.ErrorResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class MinecraftClient {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(MinecraftClient.class);
     public static final int CONNECT_TIMEOUT_MS = 5000;
     public static final int READ_TIMEOUT_MS = 5000;
 

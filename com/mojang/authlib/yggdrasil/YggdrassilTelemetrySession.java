@@ -12,8 +12,8 @@ import com.mojang.authlib.minecraft.TelemetrySession;
 import com.mojang.authlib.minecraft.client.MinecraftClient;
 import com.mojang.authlib.yggdrasil.request.TelemetryEventsRequest;
 import com.mojang.authlib.yggdrasil.response.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.time.Instant;
@@ -21,7 +21,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 public class YggdrassilTelemetrySession implements TelemetrySession {
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(YggdrassilTelemetrySession.class);
 
     private static final String SOURCE = "minecraft.java";
 

@@ -1,8 +1,8 @@
 package com.mojang.authlib;
 
 import com.mojang.authlib.yggdrasil.YggdrasilEnvironment;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
@@ -18,7 +18,7 @@ public class EnvironmentParser {
     }
 
     private static final String PROP_PREFIX = "minecraft.api.";
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(EnvironmentParser.class);
 
     public static final String PROP_ENV = PROP_PREFIX + "env";
     public static final String PROP_AUTH_HOST = PROP_PREFIX + "auth.host";
