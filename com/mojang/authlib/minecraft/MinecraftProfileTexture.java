@@ -4,6 +4,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import javax.annotation.Nullable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 
 public class MinecraftProfileTexture {
@@ -37,7 +39,11 @@ public class MinecraftProfileTexture {
     }
 
     public String getHash() {
-        return FilenameUtils.getBaseName(url);
+        try {
+            return FilenameUtils.getBaseName(new URL(url).getPath());
+        } catch (final MalformedURLException exception) {
+            throw new IllegalArgumentException("Invalid profile texture url");
+        }
     }
 
     @Override
