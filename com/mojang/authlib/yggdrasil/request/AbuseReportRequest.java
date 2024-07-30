@@ -23,9 +23,12 @@ public class AbuseReportRequest {
 
     public static class ClientInfo {
         public String clientVersion;
+        // IETF BCP 47 language tag
+        public String locale;
 
-        public ClientInfo(final String clientVersion) {
+        public ClientInfo(final String clientVersion, final String locale) {
             this.clientVersion = clientVersion;
+            this.locale = locale;
         }
     }
 
