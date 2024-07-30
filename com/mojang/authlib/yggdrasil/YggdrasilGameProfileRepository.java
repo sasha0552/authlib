@@ -34,7 +34,7 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
 
     public YggdrasilGameProfileRepository(final Proxy proxy, final Environment environment) {
         this.client = MinecraftClient.unauthenticated(proxy);
-        searchPageUrl = HttpAuthenticationService.constantURL(environment.accountsHost() + "/profiles/minecraft");
+        searchPageUrl = HttpAuthenticationService.constantURL(environment.servicesHost() + "/minecraft/profile/lookup/bulk/byname");
     }
 
     @Override

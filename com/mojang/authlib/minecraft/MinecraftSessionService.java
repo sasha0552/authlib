@@ -8,7 +8,6 @@ import com.mojang.authlib.yggdrasil.ProfileResult;
 
 import javax.annotation.Nullable;
 import java.net.InetAddress;
-import java.util.Map;
 import java.util.UUID;
 
 public interface MinecraftSessionService {
@@ -41,16 +40,39 @@ public interface MinecraftSessionService {
     ProfileResult hasJoinedServer(String profileName, String serverId, @Nullable InetAddress address) throws AuthenticationUnavailableException;
 
     /**
-     * Gets a map of all known textures from a {@link com.mojang.authlib.GameProfile}.
-     * <p />
-     * If a profile contains invalid textures, they will not be returned. If a profile contains no textures, an empty map will be returned.
+     * Gets the packed property representation of any textures contained in the given profile.
      *
-     * @param profile Game profile to return textures from.
-     * @param requireSecure If true, requires the payload to be recent and securely fetched.
-     * @return Map of texture types to textures.
-     * @throws InsecurePublicKeyException If requireSecure is true and the data is insecure
+     * @param profile the profile to get textures from
+     * @return the packed property containing texture data, or {@code null} if this profile does not have any
+     *
+     * @see MinecraftSessionService#unpackTextures(Property)
+     * @see MinecraftSessionService#getTextures(GameProfile)
      */
-    Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile, boolean requireSecure) throws InsecurePublicKeyException;
+    @Nullable
+    Property getPackedTextures(GameProfile profile);
+
+    /**
+     * Unpacks the texture data contained in the given packed profile property.
+     *
+     * @param packedTextures the raw texture data to unpack
+     * @return the unpacked set of textures, or {@link MinecraftProfileTextures#EMPTY} if the data was malformed
+     * @see MinecraftSessionService#getPackedTextures(GameProfile)
+     * @see MinecraftSessionService#getTextures(GameProfile)
+     */
+    MinecraftProfileTextures unpackTextures(Property packedTextures);
+
+    /**
+     * Gets and unpacks any textures contains in the given profile.
+     *
+     * @param profile the profile to get textures from
+     * @return the unpacked set of textures, or {@link MinecraftProfileTextures#EMPTY} if the data was missing or malformed
+     * @see MinecraftSessionService#getPackedTextures(GameProfile)
+     * @see MinecraftSessionService#unpackTextures(Property)
+     */
+    default MinecraftProfileTextures getTextures(final GameProfile profile) {
+        final Property packed = getPackedTextures(profile);
+        return packed != null ? unpackTextures(packed) : MinecraftProfileTextures.EMPTY;
+    }
 
     /**
      * Fetches the profile information associated with the given ID from the session service.

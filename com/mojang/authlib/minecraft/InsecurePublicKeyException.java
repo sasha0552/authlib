@@ -6,8 +6,8 @@ public class InsecurePublicKeyException extends RuntimeException {
     }
 
     public static class MissingException extends InsecurePublicKeyException {
-        public MissingException() {
-            super("No public key information found");
+        public MissingException(final String message) {
+            super(message);
         }
     }
 

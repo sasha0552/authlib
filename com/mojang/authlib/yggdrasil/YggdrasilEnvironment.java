@@ -8,20 +8,18 @@ import java.util.stream.Stream;
 
 public enum YggdrasilEnvironment {
     PROD(
-        "https://api.mojang.com",
         "https://sessionserver.mojang.com",
         "https://api.minecraftservices.com"
     ),
     STAGING(
-        "https://api-staging.mojang.com",
         "https://yggdrasil-auth-session-staging.mojang.zone",
         "https://api-staging.minecraftservices.com"
     );
 
     private final Environment environment;
 
-    YggdrasilEnvironment(final String accountsHost, final String sessionHost, final String servicesHost) {
-        this.environment = new Environment(accountsHost, sessionHost, servicesHost, name());
+    YggdrasilEnvironment(final String sessionHost, final String servicesHost) {
+        this.environment = new Environment(sessionHost, servicesHost, name());
     }
 
     public Environment getEnvironment() {

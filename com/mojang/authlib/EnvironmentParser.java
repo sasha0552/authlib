@@ -21,7 +21,6 @@ public class EnvironmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(EnvironmentParser.class);
 
     public static final String PROP_ENV = PROP_PREFIX + "env";
-    public static final String PROP_ACCOUNT_HOST = PROP_PREFIX + "account.host";
     public static final String PROP_SESSION_HOST = PROP_PREFIX + "session.host";
     public static final String PROP_SERVICES_HOST = PROP_PREFIX + "services.host";
 
@@ -33,14 +32,14 @@ public class EnvironmentParser {
     }
 
     private static Optional<Environment> fromHostNames() {
-        final String account = System.getProperty(PROP_ACCOUNT_HOST);
         final String session = System.getProperty(PROP_SESSION_HOST);
         final String services = System.getProperty(PROP_SERVICES_HOST);
 
-        if (account != null && session != null) {
-            return Optional.of(new Environment(account, session, services, "properties"));
-        } else if (account != null || session != null) {
-            LOGGER.info("Ignoring hosts properties. All need to be set: " + asList(PROP_ACCOUNT_HOST, PROP_SESSION_HOST));
+        if (services != null && session != null) {
+            return Optional.of(new Environment(session, services, "properties"));
+        }
+        if (services != null || session != null) {
+            LOGGER.info("Ignoring hosts properties. All need to be set: " + asList(PROP_SERVICES_HOST, PROP_SESSION_HOST));
         }
         return Optional.empty();
 
