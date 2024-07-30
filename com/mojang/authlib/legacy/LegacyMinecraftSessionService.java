@@ -67,7 +67,7 @@ public class LegacyMinecraftSessionService extends HttpMinecraftSessionService {
     }
 
     @Override
-    public GameProfile fillProfileProperties(GameProfile profile) {
+    public GameProfile fillProfileProperties(GameProfile profile, boolean requireSecure) {
         return profile;
     }
 

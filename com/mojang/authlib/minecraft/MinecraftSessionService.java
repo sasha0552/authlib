@@ -54,6 +54,18 @@ public interface MinecraftSessionService {
      *
      * @param profile Game profile to fill with properties.
      * @return Filled profile for the previous user.
+     * @deprecated Use {@link #fillProfileProperties(com.mojang.authlib.GameProfile, boolean)}
      */
     public GameProfile fillProfileProperties(GameProfile profile);
+
+    /**
+     * Fills a profile with all known properties from the session service.
+     * <p />
+     * The profile must have an ID. If no information is found, nothing will be done.
+     *
+     * @param profile Game profile to fill with properties.
+     * @param requireSecure If you require verifiable correct data.
+     * @return Filled profile for the previous user.
+     */
+    public GameProfile fillProfileProperties(GameProfile profile, boolean requireSecure);
 }

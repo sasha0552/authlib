@@ -95,14 +95,16 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         Property textureProperty = Iterables.getFirst(profile.getProperties().get("textures"), null);
         if (textureProperty == null) return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
 
-        if (!textureProperty.hasSignature()) {
-            LOGGER.error("Signature is missing from textures payload");
-            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
-        }
+        if (requireSecure) {
+            if (!textureProperty.hasSignature()) {
+                LOGGER.error("Signature is missing from textures payload");
+                return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+            }
 
-        if (!textureProperty.isSignatureValid(publicKey)) {
-            LOGGER.error("Textures payload has been tampered with (signature invalid)");
-            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+            if (!textureProperty.isSignatureValid(publicKey)) {
+                LOGGER.error("Textures payload has been tampered with (signature invalid)");
+                return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+            }
         }
 
         MinecraftTexturesPayload result;
@@ -144,23 +146,24 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     }
 
     @Override
-    public GameProfile fillProfileProperties(GameProfile profile) {
+    public GameProfile fillProfileProperties(GameProfile profile, boolean requireSecure) {
         if (profile.getId() == null) {
             return profile;
         }
 
         try {
             URL url = HttpAuthenticationService.constantURL(BASE_URL + "profile/" + UUIDTypeAdapter.fromUUID(profile.getId()));
+            url = HttpAuthenticationService.concatenateURL(url, "unsigned=" + !requireSecure);
             MinecraftProfilePropertiesResponse response = getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
 
             if (response == null) {
                 LOGGER.debug("Couldn't fetch profile properties for " + profile + " as the profile does not exist");
                 return profile;
             } else {
-                LOGGER.debug("Successfully fetched profile properties for " + profile);
                 GameProfile result = new GameProfile(response.getId(), response.getName());
                 result.getProperties().putAll(response.getProperties());
                 profile.getProperties().putAll(response.getProperties());
+                LOGGER.debug("Successfully fetched profile properties for " + profile);
                 return result;
             }
         } catch (AuthenticationException e) {
