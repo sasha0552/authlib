@@ -5,13 +5,15 @@ import com.mojang.authlib.minecraft.report.AbuseReport;
 import java.util.UUID;
 
 public class AbuseReportRequest {
+    public int version;
     public UUID id;
     public AbuseReport report;
     public ClientInfo clientInfo;
     public ThirdPartyServerInfo thirdPartyServerInfo;
     public RealmInfo realmInfo;
 
-    public AbuseReportRequest(final UUID id, final AbuseReport report, final ClientInfo clientInfo, final ThirdPartyServerInfo thirdPartyServerInfo, final RealmInfo realmInfo) {
+    public AbuseReportRequest(final int version, final UUID id, final AbuseReport report, final ClientInfo clientInfo, final ThirdPartyServerInfo thirdPartyServerInfo, final RealmInfo realmInfo) {
+        this.version = version;
         this.id = id;
         this.report = report;
         this.clientInfo = clientInfo;

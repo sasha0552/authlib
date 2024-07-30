@@ -7,8 +7,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import java.util.UUID;
 
 public class GameProfile {
-    private static final String EMPTY_PLAYER_NAME = "\u0020";
-
     private final UUID id;
     private final String name;
     private final PropertyMap properties = new PropertyMap();
@@ -29,7 +27,7 @@ public class GameProfile {
         }
 
         this.id = id;
-        this.name = name != null && name.isEmpty() ? EMPTY_PLAYER_NAME : name;
+        this.name = name;
     }
 
     /**
@@ -71,10 +69,6 @@ public class GameProfile {
      * @return True if this profile is complete (as opposed to partial)
      */
     public boolean isComplete() {
-        // FIXME: Oh no. Workaround for player heads.
-        if (id != null && EMPTY_PLAYER_NAME.equals(name) && properties.containsKey("textures")) {
-            return true;
-        }
         return id != null && StringUtils.isNotBlank(getName());
     }
 
