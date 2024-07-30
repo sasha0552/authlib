@@ -9,8 +9,11 @@ import com.mojang.authlib.exceptions.MinecraftClientHttpException;
 import com.mojang.authlib.minecraft.TelemetrySession;
 import com.mojang.authlib.minecraft.UserApiService;
 import com.mojang.authlib.minecraft.client.MinecraftClient;
+import com.mojang.authlib.minecraft.report.AbuseReportLimits;
+import com.mojang.authlib.yggdrasil.request.AbuseReportRequest;
 import com.mojang.authlib.yggdrasil.response.BlockListResponse;
 import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
+import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.authlib.yggdrasil.response.UserAttributesResponse;
 
 import javax.annotation.Nullable;
@@ -28,6 +31,7 @@ public class YggdrasilUserApiService implements UserApiService {
     private final URL routePrivileges;
     private final URL routeBlocklist;
     private final URL routeKeyPair;
+    private final URL routeAbuseReport;
 
     private final MinecraftClient minecraftClient;
     private final Environment environment;
@@ -44,6 +48,7 @@ public class YggdrasilUserApiService implements UserApiService {
         routePrivileges = HttpAuthenticationService.constantURL(env.getServicesHost() + "/player/attributes");
         routeBlocklist = HttpAuthenticationService.constantURL(env.getServicesHost() + "/privacy/blocklist");
         routeKeyPair = HttpAuthenticationService.constantURL(env.getServicesHost() + "/player/certificates");
+        routeAbuseReport = HttpAuthenticationService.constantURL(env.getServicesHost() + "/player/report");
         fetchProperties();
     }
 
@@ -149,5 +154,20 @@ public class YggdrasilUserApiService implements UserApiService {
         if (privilege) {
             output.add(value);
         }
+    }
+
+    @Override
+    public void reportAbuse(final AbuseReportRequest request) {
+        minecraftClient.post(routeAbuseReport, request, Response.class);
+    }
+
+    @Override
+    public boolean canSendReports() {
+        return true;
+    }
+
+    @Override
+    public AbuseReportLimits getAbuseReportLimits() {
+        return AbuseReportLimits.DEFAULTS;
     }
 }

@@ -1,5 +1,7 @@
 package com.mojang.authlib.minecraft;
 
+import com.mojang.authlib.minecraft.report.AbuseReportLimits;
+import com.mojang.authlib.yggdrasil.request.AbuseReportRequest;
 import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
 
 import javax.annotation.Nullable;
@@ -64,6 +66,20 @@ public interface UserApiService {
         public KeyPairResponse getKeyPair() {
             return null;
         }
+
+        @Override
+        public void reportAbuse(final AbuseReportRequest request) {
+        }
+
+        @Override
+        public boolean canSendReports() {
+            return false;
+        }
+
+        @Override
+        public AbuseReportLimits getAbuseReportLimits() {
+            return AbuseReportLimits.DEFAULTS;
+        }
     };
 
     UserProperties properties();
@@ -92,4 +108,10 @@ public interface UserApiService {
 
     @Nullable
     KeyPairResponse getKeyPair();
+
+    void reportAbuse(AbuseReportRequest request);
+
+    boolean canSendReports();
+
+    AbuseReportLimits getAbuseReportLimits();
 }
