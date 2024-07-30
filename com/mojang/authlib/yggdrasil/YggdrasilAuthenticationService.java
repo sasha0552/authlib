@@ -31,11 +31,10 @@ import java.lang.reflect.Type;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import javax.annotation.Nullable;
 
 public class YggdrasilAuthenticationService extends HttpAuthenticationService {
 
@@ -149,6 +148,6 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     }
 
     public YggdrasilSocialInteractionsService createSocialInteractionsService(final String accessToken) throws AuthenticationException {
-        return new YggdrasilSocialInteractionsService(this, accessToken, environment);
+        return new YggdrasilSocialInteractionsService(accessToken, getProxy(), environment);
     }
 }

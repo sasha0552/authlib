@@ -19,6 +19,11 @@ public class OfflineSocialInteractions implements SocialInteractionsService {
     }
 
     @Override
+    public boolean telemetryAllowed() {
+        return false;
+    }
+
+    @Override
     public boolean isBlockedPlayer(final UUID playerID) {
         return false;
     }

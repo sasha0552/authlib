@@ -26,6 +26,13 @@ public interface SocialInteractionsService {
     boolean chatAllowed();
 
     /**
+     * Check if the user is allowed to send telemetry.
+     *
+     * @return True if the user is allowed to send telemetry
+     */
+    boolean telemetryAllowed();
+
+    /**
      * Check if a player is on the block list.
      *
      * @param playerID A valid player UUID
