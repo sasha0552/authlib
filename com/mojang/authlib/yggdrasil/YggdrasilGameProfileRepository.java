@@ -1,20 +1,22 @@
 package com.mojang.authlib.yggdrasil;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.mojang.authlib.*;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
 import java.util.Set;
 
 public class YggdrasilGameProfileRepository implements GameProfileRepository {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final String BASE_URL = "https://api.mojang.com/";
-    private static final String SEARCH_PAGE_URL = BASE_URL + "profiles/page/";
+    private static final String SEARCH_PAGE_URL = BASE_URL + "profiles/";
+    private static final int ENTRIES_PER_PAGE = 2;
     private static final int MAX_FAIL_COUNT = 3;
     private static final int DELAY_BETWEEN_PAGES = 100;
     private static final int DELAY_BETWEEN_FAILURES = 750;
@@ -27,108 +29,62 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
 
     @Override
     public void findProfilesByNames(String[] names, Agent agent, ProfileLookupCallback callback) {
-        Set<ProfileCriteria> criteria = Sets.newHashSet();
+        Set<String> criteria = Sets.newHashSet();
 
         for (String name : names) {
             if (!Strings.isNullOrEmpty(name)) {
-                criteria.add(new ProfileCriteria(name, agent));
+                criteria.add(name.toLowerCase());
             }
         }
 
-        Exception exception = null;
-        Set<ProfileCriteria> request = Sets.newHashSet(criteria);
-        int page = 1;
-        int failCount = 0;
+        int page = 0;
 
-        while (!criteria.isEmpty()) {
-            try {
-                ProfileSearchResultsResponse response = authenticationService.makeRequest(HttpAuthenticationService.constantURL(SEARCH_PAGE_URL + page), request, ProfileSearchResultsResponse.class);
-                failCount = 0;
-                exception = null;
+        for (List<String> request : Iterables.partition(criteria, ENTRIES_PER_PAGE)) {
+            int failCount = 0;
+            boolean failed;
 
-                if (response.getSize() == 0 || response.getProfiles().length == 0) {
-                    LOGGER.debug("Page {} returned empty, aborting search", page);
-                    break;
-                } else {
-                    LOGGER.debug("Page {} returned {} results of {}, parsing", page, response.getProfiles().length, response.getSize());
+            do {
+                failed = false;
 
+                try {
+                    ProfileSearchResultsResponse response = authenticationService.makeRequest(HttpAuthenticationService.constantURL(SEARCH_PAGE_URL + agent.getName().toLowerCase()), request, ProfileSearchResultsResponse.class);
+                    failCount = 0;
+
+                    LOGGER.debug("Page {} returned {} results, parsing", page, response.getProfiles().length);
+
+                    Set<String> missing = Sets.newHashSet(request);
                     for (GameProfile profile : response.getProfiles()) {
                         LOGGER.debug("Successfully looked up profile {}", profile);
-                        criteria.remove(new ProfileCriteria(profile.getName(), agent));
+                        missing.remove(profile.getName().toLowerCase());
                         callback.onProfileLookupSucceeded(profile);
                     }
 
-                    LOGGER.debug("Page {} successfully parsed", page);
-                    page++;
+                    for (String name : missing) {
+                        LOGGER.debug("Couldn't find profile {}", name);
+                        callback.onProfileLookupFailed(new GameProfile(null, name), new ProfileNotFoundException("Server did not find the requested profile"));
+                    }
 
                     try {
                         Thread.sleep(DELAY_BETWEEN_PAGES);
-                    } catch (InterruptedException ignored) {}
-                }
-            } catch (AuthenticationException e) {
-                exception = e;
-                failCount++;
+                    } catch (InterruptedException ignored) {
+                    }
+                } catch (AuthenticationException e) {
+                    failCount++;
 
-                if (failCount == MAX_FAIL_COUNT) {
-                    break;
-                } else {
-                    try {
-                        Thread.sleep(DELAY_BETWEEN_FAILURES);
-                    } catch (InterruptedException ignored) {}
+                    if (failCount == MAX_FAIL_COUNT) {
+                        for (String name : request) {
+                            LOGGER.debug("Couldn't find profile {} because of a server error", name);
+                            callback.onProfileLookupFailed(new GameProfile(null, name), e);
+                        }
+                    } else {
+                        try {
+                            Thread.sleep(DELAY_BETWEEN_FAILURES);
+                        } catch (InterruptedException ignored) {
+                        }
+                        failed = true;
+                    }
                 }
-            }
-        }
-
-        if (criteria.isEmpty()) {
-            LOGGER.debug("Successfully found every profile requested");
-        } else {
-            LOGGER.debug("{} profiles were missing from search results", criteria.size());
-            if (exception == null) {
-                exception = new ProfileNotFoundException("Server did not find the requested profile");
-            }
-            for (ProfileCriteria profileCriteria : criteria) {
-                callback.onProfileLookupFailed(new GameProfile(null, profileCriteria.getName()), exception);
-            }
+            } while (failed);
         }
     }
-
-    private class ProfileCriteria {
-        private final String name;
-        private final String agent;
-
-        private ProfileCriteria(String name, Agent agent) {
-            this.name = name;
-            this.agent = agent.getName();
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getAgent() {
-            return agent;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ProfileCriteria that = (ProfileCriteria) o;
-            return agent.equals(that.agent) && name.toLowerCase().equals(that.name.toLowerCase());
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * name.toLowerCase().hashCode() + agent.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return new ToStringBuilder(this)
-                    .append("agent", agent)
-                    .append("name", name)
-                    .toString();
-        }
-    }
-
 }
