@@ -1,28 +1,45 @@
 package com.mojang.authlib.minecraft;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 
 public interface UserApiService {
+    enum UserFlag {
+        /**
+         * Is the user allowed to play on 3rd-party multiplayer servers?
+         */
+        SERVERS_ALLOWED,
+        /**
+         * Is the user allowed to play on Realms?
+         */
+        REALMS_ALLOWED,
+        /**
+         * Is the user allowed to access chat in online games?
+         */
+        CHAT_ALLOWED,
+        /**
+         * Is telemetry enabled for this user?
+         */
+        TELEMETRY_ENABLED,
+        /**
+         * Is chat profanity filter enabled for this user?
+         */
+        PROFANITY_FILTER_ENABLED,
+    }
+
+    record UserProperties(Set<UserFlag> flags) {
+        public boolean flag(final UserFlag flag) {
+            return flags.contains(flag);
+        }
+    }
+
+    UserProperties OFFLINE_PROPERTIES = new UserProperties(Set.of(UserFlag.CHAT_ALLOWED, UserFlag.REALMS_ALLOWED, UserFlag.SERVERS_ALLOWED));
+
     UserApiService OFFLINE = new UserApiService() {
         @Override
-        public boolean serversAllowed() {
-            return true;
-        }
-
-        @Override
-        public boolean realmsAllowed() {
-            return true;
-        }
-
-        @Override
-        public boolean chatAllowed() {
-            return true;
-        }
-
-        @Override
-        public boolean telemetryAllowed() {
-            return false;
+        public UserProperties properties() {
+            return OFFLINE_PROPERTIES;
         }
 
         @Override
@@ -40,33 +57,7 @@ public interface UserApiService {
         }
     };
 
-    /**
-     * Checks if the user is allowed to play on multiplayer servers.
-     *
-     * @return True if the user is allowed to play on multiplayer servers
-     */
-    boolean serversAllowed();
-
-    /**
-     * Checks if the user is allowed to play on realms.
-     *
-     * @return True if the user is allowed to play on realms
-     */
-    boolean realmsAllowed();
-
-    /**
-     * Checks if the user is allowed to access chat in online games.
-     *
-     * @return True if the user is allowed to chat
-     */
-    boolean chatAllowed();
-
-    /**
-     * Check if the user is allowed to send telemetry.
-     *
-     * @return True if the user is allowed to send telemetry
-     */
-    boolean telemetryAllowed();
+    UserProperties properties();
 
     /**
      * Check if a player is on the block list.
