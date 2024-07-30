@@ -146,7 +146,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
         }
 
-        if (result.getTextures() == null) {
+        if (result == null || result.getTextures() == null) {
             return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
         }
 
