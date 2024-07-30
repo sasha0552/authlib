@@ -145,7 +145,7 @@ public class YggdrasilUserApiService implements UserApiService {
             final Map<String, BanDetails> bannedScopes = new HashMap<>();
             if (response.getBanStatus() != null) {
                 response.getBanStatus().getBannedScopes().forEach((scopeType, scope) -> {
-                    bannedScopes.put(scopeType, new BanDetails(scope.getBanId(), scope.getExpires(), scope.getReason()));
+                    bannedScopes.put(scopeType, new BanDetails(scope.getBanId(), scope.getExpires(), scope.getReason(), scope.getReasonMessage()));
                 });
             }
 

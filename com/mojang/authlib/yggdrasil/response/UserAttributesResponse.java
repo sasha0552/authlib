@@ -1,7 +1,5 @@
 package com.mojang.authlib.yggdrasil.response;
 
-import com.mojang.authlib.minecraft.BanDetails;
-
 import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.Map;
@@ -83,6 +81,8 @@ public class UserAttributesResponse extends Response {
             @Nullable
             private Instant expires;
             private String reason;
+            @Nullable
+            private String reasonMessage;
 
             public UUID getBanId() {
                 return banId;
@@ -95,6 +95,11 @@ public class UserAttributesResponse extends Response {
 
             public String getReason() {
                 return reason;
+            }
+
+            @Nullable
+            public String getReasonMessage() {
+                return reasonMessage;
             }
         }
     }
