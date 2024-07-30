@@ -1,9 +1,10 @@
 package com.mojang.authlib;
 
-import com.google.common.collect.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +15,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
     protected static final String STORAGE_KEY_USER_ID = "userid";
 
     private final AuthenticationService authenticationService;
-    private final Multimap<String, String> userProperties = HashMultimap.create();
+    private final Map<String, Collection<String>> userProperties = new HashMap<String, Collection<String>>();
     private String userid;
     private String username;
     private String password;
@@ -157,15 +158,15 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
     }
 
     @Override
-    public Multimap<String, String> getUserProperties() {
+    public Map<String, Collection<String>> getUserProperties() {
         if (isLoggedIn()) {
-            return ImmutableMultimap.copyOf(getModifiableUserProperties());
+            return Collections.unmodifiableMap(getModifiableUserProperties());
         } else {
-            return ImmutableMultimap.of();
+            return Collections.unmodifiableMap(new HashMap<String, Collection<String>>());
         }
     }
 
-    protected Multimap<String, String> getModifiableUserProperties() {
+    protected Map<String, Collection<String>> getModifiableUserProperties() {
         return userProperties;
     }
 

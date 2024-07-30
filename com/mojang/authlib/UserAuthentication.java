@@ -1,8 +1,8 @@
 package com.mojang.authlib;
 
-import com.google.common.collect.Multimap;
 import com.mojang.authlib.exceptions.AuthenticationException;
 
+import java.util.Collection;
 import java.util.Map;
 
 public interface UserAuthentication {
@@ -147,13 +147,13 @@ public interface UserAuthentication {
     public String getUserID();
 
     /**
-     * Gets a bimap of properties bound to the currently logged in user.
+     * Gets a Multimap of properties bound to the currently logged in user.
      * <p />
-     * This method will return an empty bimap if the user is not logged in.
+     * This method will return an empty Multimap if the user is not logged in.
      * <p />
-     * The returned BiMap is immutable and cannot be changed.
+     * The returned Multimap is immutable and cannot be changed.
      *
-     * @return Bimap of user properties.
+     * @return Multimap of user properties.
      */
-    public Multimap<String, String> getUserProperties();
+    public Map<String, Collection<String>> getUserProperties();
 }

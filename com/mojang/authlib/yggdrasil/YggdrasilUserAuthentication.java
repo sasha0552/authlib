@@ -17,7 +17,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 
 public class YggdrasilUserAuthentication extends HttpUserAuthentication {
@@ -92,7 +94,14 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
 
         if (response.getUser() != null && response.getUser().getProperties() != null) {
             for (User.Property property : response.getUser().getProperties()) {
-                getModifiableUserProperties().put(property.getKey(), property.getValue());
+                Collection<String> values = getModifiableUserProperties().get(property.getKey());
+
+                if (values == null) {
+                    values = new ArrayList<String>();
+                    getModifiableUserProperties().put(property.getKey(), values);
+                }
+
+                values.add(property.getValue());
             }
         }
     }
@@ -132,7 +141,14 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
 
         if (response.getUser() != null && response.getUser().getProperties() != null) {
             for (User.Property property : response.getUser().getProperties()) {
-                getModifiableUserProperties().put(property.getKey(), property.getValue());
+                Collection<String> values = getModifiableUserProperties().get(property.getKey());
+
+                if (values == null) {
+                    values = new ArrayList<String>();
+                    getModifiableUserProperties().put(property.getKey(), values);
+                }
+
+                values.add(property.getValue());
             }
         }
     }
