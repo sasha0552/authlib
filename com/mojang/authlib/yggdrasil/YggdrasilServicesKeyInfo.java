@@ -133,8 +133,13 @@ public class YggdrasilServicesKeyInfo implements ServicesKeyInfo {
     @Override
     public boolean validateProperty(final Property property) {
         final Signature signature = signature();
-        final byte[] expected = Base64.getDecoder().decode(property.signature());
-
+        final byte[] expected;
+        try {
+            expected = Base64.getDecoder().decode(property.signature());
+        } catch (final IllegalArgumentException e) {
+            LOGGER.error("Malformed signature encoding on property {}", property, e);
+            return false;
+        }
         try {
             signature.update(property.value().getBytes());
             return signature.verify(expected);
