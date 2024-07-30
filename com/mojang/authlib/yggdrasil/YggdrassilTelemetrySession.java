@@ -29,9 +29,6 @@ public class YggdrassilTelemetrySession implements TelemetrySession {
     private final URL routeEvents;
     private final Executor ioExecutor;
 
-    private final JsonObject globalProperties = new JsonObject();
-    private Consumer<TelemetryPropertyContainer> eventSetupFunction = event -> {};
-
     @VisibleForTesting
     YggdrassilTelemetrySession(final MinecraftClient minecraftClient, final Environment environment, final Executor ioExecutor) {
         this.minecraftClient = minecraftClient;
@@ -49,20 +46,8 @@ public class YggdrassilTelemetrySession implements TelemetrySession {
         return new YggdrassilTelemetryEvent(this, type);
     }
 
-    @Override
-    public TelemetryPropertyContainer globalProperties() {
-        return TelemetryPropertyContainer.forJsonObject(globalProperties);
-    }
-
-    @Override
-    public void eventSetupFunction(final Consumer<TelemetryPropertyContainer> eventSetupFunction) {
-        this.eventSetupFunction = eventSetupFunction;
-    }
-
     void sendEvent(final String type, final JsonObject data) {
         final Instant sendTime = Instant.now();
-        globalProperties.entrySet().forEach(e -> data.add(e.getKey(), e.getValue()));
-        eventSetupFunction.accept(TelemetryPropertyContainer.forJsonObject(data));
         final TelemetryEventsRequest.Event request = new TelemetryEventsRequest.Event(SOURCE, type, sendTime, data);
 
         ioExecutor.execute(() -> {
