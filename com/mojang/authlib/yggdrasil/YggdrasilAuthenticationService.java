@@ -1,10 +1,7 @@
 package com.mojang.authlib.yggdrasil;
 
 import com.google.gson.*;
-import com.mojang.authlib.Agent;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.HttpAuthenticationService;
-import com.mojang.authlib.UserAuthentication;
+import com.mojang.authlib.*;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
@@ -40,6 +37,11 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     @Override
     public MinecraftSessionService createMinecraftSessionService() {
         return new YggdrasilMinecraftSessionService(this);
+    }
+
+    @Override
+    public GameProfileRepository createProfileRepository() {
+        return new YggdrasilGameProfileRepository(this);
     }
 
     protected <T extends Response> T makeRequest(URL url, Object input, Class<T> classOfT) throws AuthenticationException {

@@ -23,4 +23,11 @@ public interface AuthenticationService {
      * @return New minecraft session service
      */
     public MinecraftSessionService createMinecraftSessionService();
+
+    /**
+     * Creates a relevant {@link com.mojang.authlib.GameProfileRepository} designed for this authentication service.
+     *
+     * @return New profile repository
+     */
+    public GameProfileRepository createProfileRepository();
 }
