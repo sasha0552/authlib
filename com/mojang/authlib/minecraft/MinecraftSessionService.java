@@ -4,6 +4,8 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 
+import java.util.Map;
+
 public interface MinecraftSessionService {
     /**
      * Attempts to join the specified Minecraft server.
@@ -33,4 +35,14 @@ public interface MinecraftSessionService {
      * @return Full game profile if the user had joined, otherwise null
      */
     public GameProfile hasJoinedServer(GameProfile user, String serverId) throws AuthenticationUnavailableException;
+
+    /**
+     * Gets a map of all known textures from a {@link com.mojang.authlib.GameProfile}.
+     * <p />
+     * If a profile contains invalid textures, they will not be returned. If a profile contains no textures, an empty map will be returned.
+     *
+     * @param profile Game profile to return textures from.
+     * @return Map of texture types to textures.
+     */
+    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile);
 }

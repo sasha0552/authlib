@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 
 import java.io.IOException;
 import java.net.URL;
@@ -58,6 +59,11 @@ public class LegacyMinecraftSessionService extends HttpMinecraftSessionService {
         } catch (IOException e) {
             throw new AuthenticationUnavailableException(e);
         }
+    }
+
+    @Override
+    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile) {
+        return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
     }
 
     @Override

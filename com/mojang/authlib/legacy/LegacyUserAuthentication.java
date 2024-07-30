@@ -3,6 +3,7 @@ package com.mojang.authlib.legacy;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.HttpUserAuthentication;
+import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import org.apache.commons.lang3.StringUtils;
@@ -62,6 +63,7 @@ public class LegacyUserAuthentication extends HttpUserAuthentication {
 
             setSelectedProfile(new GameProfile(profileId, profileName));
             this.sessionToken = sessionToken;
+            setUserType(UserType.LEGACY);
         } else {
             throw new InvalidCredentialsException(response);
         }

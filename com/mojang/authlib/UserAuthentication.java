@@ -58,7 +58,7 @@ public interface UserAuthentication {
     boolean canPlayOnline();
 
     /**
-     * Gets a list of valid {@link com.mojang.authlib.GameProfile GameProfiles} for this user.
+     * Gets a list of valid {@link GameProfile GameProfiles} for this user.
      * <p />
      * Calling this method whilst the user is not {@link #isLoggedIn() logged in} will always return null.
      * If the result of this method is an empty array or null and the user is logged in, the user is considered to not have purchased the game but
@@ -69,7 +69,7 @@ public interface UserAuthentication {
     GameProfile[] getAvailableProfiles();
 
     /**
-     * Gets the currently selected {@link com.mojang.authlib.GameProfile} for this user.
+     * Gets the currently selected {@link GameProfile} for this user.
      * <p />
      * Calling this method whilst the user is not {@link #isLoggedIn() logged in} or has no {@link #getAvailableProfiles() available profiles} will always return null.
      *
@@ -78,7 +78,7 @@ public interface UserAuthentication {
     GameProfile getSelectedProfile();
 
     /**
-     * Attempts to select the specified {@link com.mojang.authlib.GameProfile}.
+     * Attempts to select the specified {@link GameProfile}.
      * <p />
      * The user must be {@link #isLoggedIn() logged in}, have no {@link #getSelectedProfile() currently selected game profile} and the specified profile must
      * be retrieved from {@link #getAvailableProfiles()}.
@@ -156,4 +156,13 @@ public interface UserAuthentication {
      * @return Multimap of user properties.
      */
     public Map<String, Collection<String>> getUserProperties();
+
+    /**
+     * Gets the type of the currently logged in user.
+     * <p />
+     * This method will return null if the user is not logged in.
+     *
+     * @return Type of current logged in user, or null.
+     */
+    public UserType getUserType();
 }

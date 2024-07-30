@@ -2,9 +2,14 @@ package com.mojang.authlib;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class GameProfile {
     private final String id;
     private final String name;
+    private final Map<String, ProfileProperty> properties = new HashMap<String, ProfileProperty>();
+    private boolean legacy;
 
     /**
      * Constructs a new Game Profile with the specified ID and name.
@@ -45,6 +50,15 @@ public class GameProfile {
     }
 
     /**
+     * Returns any known properties about this game profile.
+     *
+     * @return Modifiable map of profile properties.
+     */
+    public Map<String, ProfileProperty> getProperties() {
+        return properties;
+    }
+
+    /**
      * Checks if this profile is complete.
      * <p />
      * A complete profile has no empty fields. Partial profiles may be constructed manually and used as input to methods.
@@ -81,5 +95,9 @@ public class GameProfile {
                 "id='" + id + '\'' +
                 ", name='" + name + '\'' +
                 '}';
+    }
+
+    public boolean isLegacy() {
+        return legacy;
     }
 }

@@ -1,11 +1,9 @@
 package com.mojang.authlib.yggdrasil;
 
-import com.mojang.authlib.Agent;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.HttpAuthenticationService;
-import com.mojang.authlib.HttpUserAuthentication;
+import com.mojang.authlib.*;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.yggdrasil.request.AuthenticationRequest;
 import com.mojang.authlib.yggdrasil.request.RefreshRequest;
 import com.mojang.authlib.yggdrasil.response.AuthenticationResponse;
@@ -17,10 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 public class YggdrasilUserAuthentication extends HttpUserAuthentication {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -80,8 +75,16 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
         }
 
-        if (response.getUser() != null && response.getUser().getId() != null) {
-            setUserid(response.getUser().getId());
+        if (response.getSelectedProfile() != null) {
+            setUserType(response.getSelectedProfile().isLegacy() ? UserType.LEGACY : UserType.MOJANG);
+        } else if (ArrayUtils.isNotEmpty(response.getAvailableProfiles())) {
+            setUserType(response.getAvailableProfiles()[0].isLegacy() ? UserType.LEGACY : UserType.MOJANG);
+        }
+
+        User user = response.getUser();
+
+        if (user != null && user.getId() != null) {
+            setUserid(user.getId());
         } else {
             setUserid(getUsername());
         }
@@ -92,8 +95,14 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
         setSelectedProfile(response.getSelectedProfile());
         getModifiableUserProperties().clear();
 
-        if (response.getUser() != null && response.getUser().getProperties() != null) {
-            for (User.Property property : response.getUser().getProperties()) {
+        updateUserProperties(user);
+    }
+
+    protected void updateUserProperties(User user) {
+        if (user == null) return;
+
+        if (user.getProperties() != null) {
+            for (User.Property property : user.getProperties()) {
                 Collection<String> values = getModifiableUserProperties().get(property.getKey());
 
                 if (values == null) {
@@ -127,6 +136,12 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
         }
 
+        if (response.getSelectedProfile() != null) {
+            setUserType(response.getSelectedProfile().isLegacy() ? UserType.LEGACY : UserType.MOJANG);
+        } else if (ArrayUtils.isNotEmpty(response.getAvailableProfiles())) {
+            setUserType(response.getAvailableProfiles()[0].isLegacy() ? UserType.LEGACY : UserType.MOJANG);
+        }
+
         if (response.getUser() != null && response.getUser().getId() != null) {
             setUserid(response.getUser().getId());
         } else {
@@ -139,18 +154,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
         setSelectedProfile(response.getSelectedProfile());
         getModifiableUserProperties().clear();
 
-        if (response.getUser() != null && response.getUser().getProperties() != null) {
-            for (User.Property property : response.getUser().getProperties()) {
-                Collection<String> values = getModifiableUserProperties().get(property.getKey());
-
-                if (values == null) {
-                    values = new ArrayList<String>();
-                    getModifiableUserProperties().put(property.getKey(), values);
-                }
-
-                values.add(property.getValue());
-            }
-        }
+        updateUserProperties(response.getUser());
     }
 
     @Override
@@ -248,6 +252,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
                 ", selectedProfile=" + getSelectedProfile() +
                 ", username='" + getUsername() + '\''+
                 ", isLoggedIn=" + isLoggedIn() +
+                ", userType=" + getUserType() +
                 ", canPlayOnline=" + canPlayOnline() +
                 ", accessToken='" + accessToken + '\'' +
                 ", clientToken='" + getAuthenticationService().getClientToken() + '\'' +

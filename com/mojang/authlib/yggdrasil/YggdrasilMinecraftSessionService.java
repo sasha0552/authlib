@@ -1,25 +1,50 @@
 package com.mojang.authlib.yggdrasil;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
+import com.mojang.authlib.ProfileProperty;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
+import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.yggdrasil.request.JoinMinecraftServerRequest;
 import com.mojang.authlib.yggdrasil.response.HasJoinedMinecraftServerResponse;
+import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.authlib.yggdrasil.response.Response;
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.net.URL;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Map;
 
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
+    private static final Logger LOGGER = LogManager.getLogger();
     private static final String BASE_URL = "https://sessionserver.mojang.com/session/minecraft/";
     private static final URL JOIN_URL = HttpAuthenticationService.constantURL(BASE_URL + "join");
     private static final URL CHECK_URL = HttpAuthenticationService.constantURL(BASE_URL + "hasJoined");
 
+    private final PublicKey publicKey;
+    private final Gson gson = new Gson();
+
     protected YggdrasilMinecraftSessionService(YggdrasilAuthenticationService authenticationService) {
         super(authenticationService);
+
+        try {
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(IOUtils.toByteArray(YggdrasilMinecraftSessionService.class.getResourceAsStream("/yggdrasil_session_pubkey.der")));
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            publicKey = keyFactory.generatePublic(spec);
+        } catch (Exception e) {
+            throw new Error("Missing/invalid yggdrasil public key!");
+        }
     }
 
     @Override
@@ -43,12 +68,62 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
         try {
             HasJoinedMinecraftServerResponse response = getAuthenticationService().makeRequest(url, null, HasJoinedMinecraftServerResponse.class);
-            return response != null && response.getId() != null ? new GameProfile(response.getId(), user.getName()) : null;
+
+            if (response != null && response.getId() != null) {
+                GameProfile result = new GameProfile(response.getId(), user.getName());
+
+                if (response.getProperties() != null) {
+                    for (ProfileProperty property : response.getProperties()) {
+                        result.getProperties().put(property.getName(), property);
+                    }
+                }
+
+                return result;
+            } else {
+                return null;
+            }
         } catch (AuthenticationUnavailableException e) {
             throw e;
         } catch (AuthenticationException e) {
             return null;
         }
+    }
+
+    @Override
+    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile) {
+        ProfileProperty textureProperty = profile.getProperties().get("textures");
+        if (textureProperty == null) return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+
+        if (!textureProperty.hasSignature()) {
+            LOGGER.error("Signature is missing from textures payload");
+            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+        }
+
+        if (!textureProperty.isSignatureValid(publicKey)) {
+            LOGGER.error("Textures payload has been tampered with (signature invalid)");
+            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+        }
+
+        MinecraftTexturesPayload result;
+        try {
+            String json = new String(Base64.decodeBase64(textureProperty.getValue()), Charsets.UTF_8);
+            result = gson.fromJson(json, MinecraftTexturesPayload.class);
+        } catch (JsonParseException e) {
+            LOGGER.error("Could not decode textures payload", e);
+            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+        }
+
+        if (result.getProfileId() == null || !result.getProfileId().equals(profile.getId())) {
+            LOGGER.error("Decrypted textures payload was for another user (expected id {} but was for {})", profile.getId(), result.getProfileId());
+            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+        }
+
+        if (result.getProfileName() == null || !result.getProfileName().equals(profile.getName())) {
+            LOGGER.error("Decrypted textures payload was for another user (expected name {} but was for {})", profile.getName(), result.getProfileName());
+            return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+        }
+
+        return result.getTextures() == null ? new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>() : result.getTextures();
     }
 
     @Override
