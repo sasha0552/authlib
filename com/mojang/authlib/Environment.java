@@ -10,11 +10,13 @@ public interface Environment {
 
     String getSessionHost();
 
+    String getServicesHost();
+
     String getName();
 
     String asString();
 
-    static Environment create(final String auth, final String account, final String session, final String name) {
+    static Environment create(final String auth, final String account, final String session, final String services, final String name) {
 
         return new Environment() {
             @Override
@@ -33,6 +35,11 @@ public interface Environment {
             }
 
             @Override
+            public String getServicesHost() {
+                return services;
+            }
+
+            @Override
             public String getName() {
                 return name;
             }
@@ -43,6 +50,7 @@ public interface Environment {
                            .add("authHost='" + getAuthHost() + "'")
                            .add("accountsHost='" + getAccountsHost() + "'")
                            .add("sessionHost='" + getSessionHost() + "'")
+                           .add("servicesHost='" + getServicesHost() + "'")
                            .add("name='" + getName() + "'")
                            .toString();
             }

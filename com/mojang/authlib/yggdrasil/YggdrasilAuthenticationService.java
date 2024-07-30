@@ -34,19 +34,30 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
+
 public class YggdrasilAuthenticationService extends HttpAuthenticationService {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
+    @Nullable
     private final String clientToken;
     private final Gson gson;
     private final Environment environment;
 
-    public YggdrasilAuthenticationService(final Proxy proxy, final String clientToken) {
+    public YggdrasilAuthenticationService(final Proxy proxy) {
+        this(proxy, determineEnvironment());
+    }
+
+    public YggdrasilAuthenticationService(final Proxy proxy, final Environment environment) {
+        this(proxy, null, environment);
+    }
+
+    public YggdrasilAuthenticationService(final Proxy proxy, @Nullable final String clientToken) {
         this(proxy, clientToken, determineEnvironment());
     }
 
-    public YggdrasilAuthenticationService(final Proxy proxy, final String clientToken, Environment environment) {
+    public YggdrasilAuthenticationService(final Proxy proxy, @Nullable final String clientToken, final Environment environment) {
         super(proxy);
         this.clientToken = clientToken;
         this.environment = environment;
@@ -67,7 +78,10 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
 
     @Override
     public UserAuthentication createUserAuthentication(final Agent agent) {
-        return new YggdrasilUserAuthentication(this, agent, environment);
+        if (clientToken == null) {
+            throw new IllegalStateException("Missing client token");
+        }
+        return new YggdrasilUserAuthentication(this, clientToken, agent, environment);
     }
 
     @Override
@@ -81,8 +95,12 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     }
 
     protected <T extends Response> T makeRequest(final URL url, final Object input, final Class<T> classOfT) throws AuthenticationException {
+        return makeRequest(url, input, classOfT, null);
+    }
+
+    protected <T extends Response> T makeRequest(final URL url, final Object input, final Class<T> classOfT, @Nullable final String authentication) throws AuthenticationException {
         try {
-            final String jsonResult = input == null ? performGetRequest(url) : performPostRequest(url, gson.toJson(input), "application/json");
+            final String jsonResult = input == null ? performGetRequest(url, authentication) : performPostRequest(url, gson.toJson(input), "application/json");
             final T result = gson.fromJson(jsonResult, classOfT);
 
             if (result == null) {
@@ -105,10 +123,6 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         }
     }
 
-    public String getClientToken() {
-        return clientToken;
-    }
-
     private static class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
         @Override
         public GameProfile deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
@@ -129,5 +143,9 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
             }
             return result;
         }
+    }
+
+    public YggdrasilSocialInteractionsService createSocialInteractionsService(final String accessToken) throws AuthenticationException {
+        return new YggdrasilSocialInteractionsService(this, accessToken, environment);
     }
 }

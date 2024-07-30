@@ -6,6 +6,7 @@ import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -108,6 +109,10 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
         }
     }
 
+    public String performGetRequest(final URL url) throws IOException {
+        return performGetRequest(url, null);
+    }
+
     /**
      * Performs a GET request to the specified URL and returns the result.
      * <p />
@@ -116,12 +121,17 @@ public abstract class HttpAuthenticationService extends BaseAuthenticationServic
      * If the server returns an error without any body, a relevant {@link java.io.IOException} will be thrown.
      *
      * @param url URL to submit the GET request to
+     * @param authentication The authentication to provide, if any
      * @return Raw text response from the server
      * @throws IOException The request was not successful
      */
-    public String performGetRequest(final URL url) throws IOException {
+    public String performGetRequest(final URL url, @Nullable final String authentication) throws IOException {
         Validate.notNull(url);
         final HttpURLConnection connection = createUrlConnection(url);
+
+        if (authentication != null) {
+            connection.setRequestProperty("Authorization", authentication);
+        }
 
         LOGGER.debug("Reading data from " + url);
 

@@ -11,22 +11,26 @@ public enum YggdrasilEnvironment implements Environment {
     PROD(
         "https://authserver.mojang.com",
         "https://api.mojang.com",
-        "https://sessionserver.mojang.com"
+        "https://sessionserver.mojang.com",
+        "https://api.minecraftservices.com"
     ),
     STAGING(
         "https://yggdrasil-auth-staging.mojang.com",
         "https://api-staging.mojang.com",
-        "https://yggdrasil-auth-session-staging.mojang.zone"
+        "https://yggdrasil-auth-session-staging.mojang.zone",
+        "https://api-staging.minecraftservices.com"
     );
 
     private final String authHost;
     private final String accountsHost;
     private final String sessionHost;
+    private final String servicesHost;
 
-    YggdrasilEnvironment(final String authHost, final String accountsHost, final String sessionHost) {
+    YggdrasilEnvironment(final String authHost, final String accountsHost, final String sessionHost, final String servicesHost) {
         this.authHost = authHost;
         this.accountsHost = accountsHost;
         this.sessionHost = sessionHost;
+        this.servicesHost = servicesHost;
     }
 
     public String getAuthHost() {
@@ -41,6 +45,10 @@ public enum YggdrasilEnvironment implements Environment {
         return sessionHost;
     }
 
+    public String getServicesHost() {
+        return servicesHost;
+    }
+
     public String getName() {
         return this.name();
     }
@@ -51,6 +59,7 @@ public enum YggdrasilEnvironment implements Environment {
                    .add("authHost='" + authHost + "'")
                    .add("accountsHost='" + accountsHost + "'")
                    .add("sessionHost='" + sessionHost + "'")
+                   .add("servicesHost='" + servicesHost + "'")
                    .add("name='" + getName() + "'")
                    .toString();
     }

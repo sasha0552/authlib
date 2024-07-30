@@ -37,15 +37,17 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
 
     private final Agent agent;
     private GameProfile[] profiles;
+    private final String clientToken;
     private String accessToken;
     private boolean isOnline;
 
-    public YggdrasilUserAuthentication(final YggdrasilAuthenticationService authenticationService, final Agent agent) {
-        this(authenticationService, agent, YggdrasilEnvironment.PROD);
+    public YggdrasilUserAuthentication(final YggdrasilAuthenticationService authenticationService, final String clientToken, final Agent agent) {
+        this(authenticationService, clientToken, agent, YggdrasilEnvironment.PROD);
     }
 
-    public YggdrasilUserAuthentication(final YggdrasilAuthenticationService authenticationService, final Agent agent, Environment env) {
+    public YggdrasilUserAuthentication(final YggdrasilAuthenticationService authenticationService, final String clientToken, final Agent agent, Environment env) {
         super(authenticationService);
+        this.clientToken = clientToken;
         this.agent = agent;
 
         LOGGER.info("Environment: " + env.getName(), ". AuthHost: " + env.getAuthHost());
@@ -86,10 +88,10 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
 
         LOGGER.info("Logging in with username & password");
 
-        final AuthenticationRequest request = new AuthenticationRequest(this, getUsername(), getPassword());
+        final AuthenticationRequest request = new AuthenticationRequest(getAgent(), getUsername(), getPassword(), clientToken);
         final AuthenticationResponse response = getAuthenticationService().makeRequest(routeAuthenticate, request, AuthenticationResponse.class);
 
-        if (!response.getClientToken().equals(getAuthenticationService().getClientToken())) {
+        if (!response.getClientToken().equals(clientToken)) {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
         }
 
@@ -146,10 +148,10 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             return;
         }
 
-        final RefreshRequest request = new RefreshRequest(this);
+        final RefreshRequest request = new RefreshRequest(getAuthenticatedToken(), clientToken);
         final RefreshResponse response = getAuthenticationService().makeRequest(routeRefresh, request, RefreshResponse.class);
 
-        if (!response.getClientToken().equals(getAuthenticationService().getClientToken())) {
+        if (!response.getClientToken().equals(clientToken)) {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
         }
 
@@ -175,7 +177,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
     }
 
     protected boolean checkTokenValidity() throws AuthenticationException {
-        final ValidateRequest request = new ValidateRequest(this);
+        final ValidateRequest request = new ValidateRequest(getAuthenticatedToken(), clientToken);
         try {
             getAuthenticationService().makeRequest(routeValidate, request, Response.class);
             return true;
@@ -220,10 +222,10 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             throw new IllegalArgumentException("Invalid profile '" + profile + "'");
         }
 
-        final RefreshRequest request = new RefreshRequest(this, profile);
+        final RefreshRequest request = new RefreshRequest(getAuthenticatedToken(), clientToken, profile);
         final RefreshResponse response = getAuthenticationService().makeRequest(routeRefresh, request, RefreshResponse.class);
 
-        if (!response.getClientToken().equals(getAuthenticationService().getClientToken())) {
+        if (!response.getClientToken().equals(clientToken)) {
             throw new AuthenticationException("Server requested we change our client token. Don't know how to handle this!");
         }
 
@@ -282,7 +284,7 @@ public class YggdrasilUserAuthentication extends HttpUserAuthentication {
             ", userType=" + getUserType() +
             ", canPlayOnline=" + canPlayOnline() +
             ", accessToken='" + accessToken + '\'' +
-            ", clientToken='" + getAuthenticationService().getClientToken() + '\'' +
+            ", clientToken='" + clientToken + '\'' +
             '}';
     }
 

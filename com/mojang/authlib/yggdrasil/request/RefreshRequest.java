@@ -1,7 +1,6 @@
 package com.mojang.authlib.yggdrasil.request;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 
 public class RefreshRequest {
     private String clientToken;
@@ -9,13 +8,13 @@ public class RefreshRequest {
     private GameProfile selectedProfile;
     private boolean requestUser = true;
 
-    public RefreshRequest(final YggdrasilUserAuthentication authenticationService) {
-        this(authenticationService, null);
+    public RefreshRequest(final String accessToken, final String clientToken) {
+        this(accessToken, clientToken, null);
     }
 
-    public RefreshRequest(final YggdrasilUserAuthentication authenticationService, final GameProfile profile) {
-        this.clientToken = authenticationService.getAuthenticationService().getClientToken();
-        this.accessToken = authenticationService.getAuthenticatedToken();
+    public RefreshRequest(final String accessToken, final String clientToken, final GameProfile profile) {
+        this.clientToken = clientToken;
+        this.accessToken = accessToken;
         this.selectedProfile = profile;
     }
 }
