@@ -1,6 +1,5 @@
 package com.mojang.authlib.minecraft;
 
-import com.google.common.collect.Maps;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -11,8 +10,11 @@ public class MinecraftProfileTexture {
     public enum Type {
         SKIN,
         CAPE,
+        ELYTRA
         ;
     }
+    
+    public static final int PROFILE_TEXTURE_COUNT = Type.values().length;
 
     private final String url;
     private final Map<String, String> metadata;
