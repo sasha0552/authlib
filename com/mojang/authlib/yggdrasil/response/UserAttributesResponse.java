@@ -39,6 +39,8 @@ public class UserAttributesResponse extends Response {
         private Privilege multiplayerRealms;
         @Nullable
         private Privilege telemetry;
+        @Nullable
+        private Privilege optionalTelemetry;
 
         public boolean getOnlineChat() {
             return onlineChat != null && onlineChat.enabled;
@@ -54,6 +56,10 @@ public class UserAttributesResponse extends Response {
 
         public boolean getTelemetry() {
             return telemetry != null && telemetry.enabled;
+        }
+
+        public boolean getOptionalTelemetry() {
+            return optionalTelemetry != null && optionalTelemetry.enabled;
         }
 
         public class Privilege {

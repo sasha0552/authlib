@@ -3,7 +3,6 @@ package com.mojang.authlib.minecraft;
 import com.mojang.authlib.minecraft.report.AbuseReportLimits;
 import com.mojang.authlib.yggdrasil.request.AbuseReportRequest;
 import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
-import com.mojang.authlib.yggdrasil.response.UserAttributesResponse;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -33,6 +32,11 @@ public interface UserApiService {
          * Is chat profanity filter enabled for this user?
          */
         PROFANITY_FILTER_ENABLED,
+        /**
+         * Is optional telemetry available for this user?
+         * This can only be `true` when {@link #TELEMETRY_ENABLED} is also `true`
+         */
+        OPTIONAL_TELEMETRY_AVAILABLE,
     }
 
     record UserProperties(Set<UserFlag> flags, Map<String, BanDetails> bannedScopes) {

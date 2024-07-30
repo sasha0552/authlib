@@ -135,6 +135,7 @@ public class YggdrasilUserApiService implements UserApiService {
                 addFlagIfUserHasPrivilege(privileges.getMultiplayerServer(), UserFlag.SERVERS_ALLOWED, flags);
                 addFlagIfUserHasPrivilege(privileges.getMultiplayerRealms(), UserFlag.REALMS_ALLOWED, flags);
                 addFlagIfUserHasPrivilege(privileges.getTelemetry(), UserFlag.TELEMETRY_ENABLED, flags);
+                addFlagIfUserHasPrivilege(privileges.getOptionalTelemetry(), UserFlag.OPTIONAL_TELEMETRY_AVAILABLE, flags);
             }
 
             final UserAttributesResponse.ProfanityFilterPreferences profanityFilterPreferences = response.getProfanityFilterPreferences();
