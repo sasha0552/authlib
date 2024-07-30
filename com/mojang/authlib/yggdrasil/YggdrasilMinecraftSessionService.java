@@ -1,5 +1,8 @@
 package com.mojang.authlib.yggdrasil;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,7 +31,10 @@ import java.net.URL;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -38,6 +44,15 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
     private final PublicKey publicKey;
     private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
+    private final LoadingCache<GameProfile, GameProfile> insecureProfiles = CacheBuilder
+            .newBuilder()
+            .expireAfterWrite(6, TimeUnit.HOURS)
+            .build(new CacheLoader<GameProfile, GameProfile>() {
+                @Override
+                public GameProfile load(GameProfile key) throws Exception {
+                    return fillGameProfile(key, false);
+                }
+            });
 
     protected YggdrasilMinecraftSessionService(YggdrasilAuthenticationService authenticationService) {
         super(authenticationService);
@@ -129,6 +144,14 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             return profile;
         }
 
+        if (!requireSecure) {
+            return insecureProfiles.getUnchecked(profile);
+        }
+
+        return fillGameProfile(profile, true);
+    }
+
+    protected GameProfile fillGameProfile(GameProfile profile, boolean requireSecure) {
         try {
             URL url = HttpAuthenticationService.constantURL(BASE_URL + "profile/" + UUIDTypeAdapter.fromUUID(profile.getId()));
             url = HttpAuthenticationService.concatenateURL(url, "unsigned=" + !requireSecure);
