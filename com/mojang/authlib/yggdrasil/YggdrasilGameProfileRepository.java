@@ -9,7 +9,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.net.Proxy;
 import java.util.Set;
 
 public class YggdrasilGameProfileRepository implements GameProfileRepository {
@@ -33,8 +32,6 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
         for (String name : names) {
             if (!Strings.isNullOrEmpty(name)) {
                 criteria.add(new ProfileCriteria(name, agent));
-            } else {
-                callback.onProfileLookupFailed(new GameProfile(null, name), new ProfileIncompleteException("Profile name is missing or empty"));
             }
         }
 
