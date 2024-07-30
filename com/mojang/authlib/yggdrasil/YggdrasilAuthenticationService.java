@@ -18,6 +18,7 @@ import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.UserAuthentication;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
+import com.mojang.authlib.exceptions.InsufficientPrivilegesException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.authlib.exceptions.UserMigratedException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
@@ -112,6 +113,8 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
                     throw new UserMigratedException(result.getErrorMessage());
                 } else if ("ForbiddenOperationException".equals(result.getError())) {
                     throw new InvalidCredentialsException(result.getErrorMessage());
+                } else if ("InsufficientPrivilegesException".equals(result.getError())) {
+                    throw new InsufficientPrivilegesException(result.getErrorMessage());
                 } else {
                     throw new AuthenticationException(result.getErrorMessage());
                 }
