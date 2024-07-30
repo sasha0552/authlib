@@ -1,7 +1,6 @@
 package com.mojang.authlib.minecraft;
 
 import com.mojang.authlib.AuthenticationService;
-import com.mojang.authlib.GameProfile;
 
 public abstract class BaseMinecraftSessionService implements MinecraftSessionService {
     private final AuthenticationService authenticationService;
@@ -12,10 +11,5 @@ public abstract class BaseMinecraftSessionService implements MinecraftSessionSer
 
     public AuthenticationService getAuthenticationService() {
         return authenticationService;
-    }
-
-    @Override
-    public GameProfile fillProfileProperties(GameProfile profile) {
-        return fillProfileProperties(profile, false);
     }
 }

@@ -9,8 +9,8 @@ import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
+import com.mojang.authlib.minecraft.InsecureTextureException;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
-import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.yggdrasil.request.JoinMinecraftServerRequest;
 import com.mojang.authlib.yggdrasil.response.HasJoinedMinecraftServerResponse;
@@ -24,7 +24,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.net.Proxy;
 import java.net.URL;
 import java.security.KeyFactory;
 import java.security.PublicKey;
@@ -98,17 +97,21 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
         if (requireSecure) {
             if (textureProperty == null) {
-                throw new InsecureTextureException();
+                if (profile.getId().version() != 4) {
+                    return new HashMap<MinecraftProfileTexture.Type, MinecraftProfileTexture>();
+                } else {
+                    throw new InsecureTextureException.MissingTextureException();
+                }
             }
 
             if (!textureProperty.hasSignature()) {
                 LOGGER.error("Signature is missing from textures payload");
-                throw new InsecureTextureException();
+                throw new InsecureTextureException("Signature is missing from textures payload");
             }
 
             if (!textureProperty.isSignatureValid(publicKey)) {
                 LOGGER.error("Textures payload has been tampered with (signature invalid)");
-                throw new InsecureTextureException();
+                throw new InsecureTextureException("Textures payload has been tampered with (signature invalid)");
             }
         } else {
             if (textureProperty == null) {
@@ -127,18 +130,18 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
         if (result.getProfileId() == null || !result.getProfileId().equals(profile.getId())) {
             LOGGER.error("Decrypted textures payload was for another user (expected id {} but was for {})", profile.getId(), result.getProfileId());
-            throw new InsecureTextureException();
+            throw new InsecureTextureException.WrongTextureOwnerException(profile, result.getProfileId(), result.getProfileName());
         }
 
         if (result.getProfileName() == null || !result.getProfileName().equals(profile.getName())) {
             LOGGER.error("Decrypted textures payload was for another user (expected name {} but was for {})", profile.getName(), result.getProfileName());
-            throw new InsecureTextureException();
+            throw new InsecureTextureException.WrongTextureOwnerException(profile, result.getProfileId(), result.getProfileName());
         }
 
         if (requireSecure) {
             if (result.isPublic()) {
                 LOGGER.error("Decrypted textures payload was public but we require secure data");
-                throw new InsecureTextureException();
+                throw new InsecureTextureException("Decrypted textures payload was public but we require secure data");
             }
 
             Calendar limit = Calendar.getInstance();
@@ -146,12 +149,12 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             Date validFrom = new Date(result.getTimestamp());
 
             if (validFrom.before(limit.getTime())) {
-                LOGGER.error("Decrypted textures payload is too old ({0}, but we need it to be at least {1})", validFrom, limit);
-                throw new InsecureTextureException();
+                LOGGER.error("Decrypted textures payload is too old ({}, but we need it to be at least {})", validFrom, limit);
+                throw new InsecureTextureException.OutdatedTextureException(validFrom, limit);
             }
 
             if (result.getTextures() == null) {
-                throw new InsecureTextureException();
+                throw new InsecureTextureException.MissingTextureException();
             }
         }
 
@@ -188,13 +191,5 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     @Override
     public YggdrasilAuthenticationService getAuthenticationService() {
         return (YggdrasilAuthenticationService) super.getAuthenticationService();
-    }
-
-    public static void main(String[] args) {
-        YggdrasilAuthenticationService service = new YggdrasilAuthenticationService(Proxy.NO_PROXY, "123");
-        MinecraftSessionService session = service.createMinecraftSessionService();
-        GameProfile gameProfile = session.fillProfileProperties(new GameProfile(UUIDTypeAdapter.fromString("bd65f694411b46959205773361c22764"), "Djinnibone2"));
-        Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> textures = session.getTextures(gameProfile, false);
-        System.out.println("gameProfile = " + gameProfile);
     }
 }

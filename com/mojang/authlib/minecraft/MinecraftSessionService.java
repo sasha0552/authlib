@@ -44,19 +44,9 @@ public interface MinecraftSessionService {
      * @param profile Game profile to return textures from.
      * @param requireSecure If true, requires the payload to be recent and securely fetched.
      * @return Map of texture types to textures.
+     * @throws com.mojang.authlib.minecraft.InsecureTextureException If requireSecure is true and the data is insecure
      */
     public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(GameProfile profile, boolean requireSecure);
-
-    /**
-     * Fills a profile with all known properties from the session service.
-     * <p />
-     * The profile must have an ID. If no information is found, nothing will be done.
-     *
-     * @param profile Game profile to fill with properties.
-     * @return Filled profile for the previous user.
-     * @deprecated Use {@link #fillProfileProperties(com.mojang.authlib.GameProfile, boolean)}
-     */
-    public GameProfile fillProfileProperties(GameProfile profile);
 
     /**
      * Fills a profile with all known properties from the session service.
