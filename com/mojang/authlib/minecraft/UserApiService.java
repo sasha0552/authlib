@@ -31,6 +31,10 @@ public interface UserApiService {
         }
 
         @Override
+        public void refreshBlockList() {
+        }
+
+        @Override
         public TelemetrySession newTelemetrySession(final Executor executor) {
             return TelemetrySession.DISABLED;
         }
@@ -66,11 +70,18 @@ public interface UserApiService {
 
     /**
      * Check if a player is on the block list.
+     * Note: might block
      *
      * @param playerID A valid player UUID
      * @return True if communications from the player should be blocked
      */
     boolean isBlockedPlayer(UUID playerID);
+
+    /*
+     * Fetch block list if not present or old enough.
+     * Note: might block
+     */
+    void refreshBlockList();
 
     /**
      * Create fresh telemetry session.

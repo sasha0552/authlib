@@ -91,17 +91,31 @@ public class YggdrasilUserApiService implements UserApiService {
         return blockList.contains(playerID);
     }
 
+    @Override
+    public void refreshBlockList() {
+        if (blockList == null || canMakeBlockListRequest()) {
+            blockList = forceFetchBlockList();
+        }
+    }
+
     @Nullable
     private Set<UUID> fetchBlockList() {
-        if (nextAcceptableBlockRequest != null && nextAcceptableBlockRequest.isAfter(Instant.now())) {
+        if (!canMakeBlockListRequest()) {
             return null;
         }
+        return forceFetchBlockList();
+    }
+
+    private boolean canMakeBlockListRequest() {
+        return nextAcceptableBlockRequest == null || Instant.now().isAfter(nextAcceptableBlockRequest);
+    }
+
+    private Set<UUID> forceFetchBlockList() {
         nextAcceptableBlockRequest = Instant.now().plusSeconds(BLOCKLIST_REQUEST_COOLDOWN_SECONDS);
         try {
             final BlockListResponse response = minecraftClient.get(routeBlocklist, BlockListResponse.class);
             return response.getBlockedProfiles();
-        }
-        catch (final MinecraftClientHttpException e) {
+        } catch (final MinecraftClientHttpException e) {
             //TODO: Look at the error type and response code. Retry if 5xx
             //TODO: Handle when status is 401 (Unathorized) -> Refresh token/login again.
             return null;
