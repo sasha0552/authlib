@@ -11,6 +11,10 @@ public interface TelemetryEvent extends TelemetryPropertyContainer {
         }
 
         @Override
+        public void addProperty(final String id, final long value) {
+        }
+
+        @Override
         public void addProperty(final String id, final boolean value) {
         }
 

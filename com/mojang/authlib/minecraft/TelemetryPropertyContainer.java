@@ -8,6 +8,8 @@ public interface TelemetryPropertyContainer {
 
     void addProperty(String id, int value);
 
+    void addProperty(String id, long value);
+
     void addProperty(String id, boolean value);
 
     void addNullProperty(String id);
@@ -21,6 +23,11 @@ public interface TelemetryPropertyContainer {
 
             @Override
             public void addProperty(final String id, final int value) {
+                object.addProperty(id, value);
+            }
+
+            @Override
+            public void addProperty(final String id, final long value) {
                 object.addProperty(id, value);
             }
 

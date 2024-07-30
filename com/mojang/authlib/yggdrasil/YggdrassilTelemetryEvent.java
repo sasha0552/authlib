@@ -36,6 +36,11 @@ public class YggdrassilTelemetryEvent implements TelemetryEvent {
     }
 
     @Override
+    public void addProperty(final String id, final long value) {
+        data().addProperty(id, value);
+    }
+
+    @Override
     public void addProperty(final String id, final boolean value) {
         data().addProperty(id, value);
     }

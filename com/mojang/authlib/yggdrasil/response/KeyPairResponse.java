@@ -7,9 +7,6 @@ import java.nio.ByteBuffer;
 
 public class KeyPairResponse extends Response {
     private KeyPair keyPair;
-    @Nullable
-    @SerializedName("publicKeySignature")
-    private ByteBuffer legacyPublicKeySignature;
     @SerializedName("publicKeySignatureV2")
     private ByteBuffer publicKeySignature;
     private String expiresAt;
@@ -21,11 +18,6 @@ public class KeyPairResponse extends Response {
 
     public String getPublicKey() {
         return keyPair.publicKey;
-    }
-
-    @Nullable
-    public ByteBuffer getLegacyPublicKeySignature() {
-        return legacyPublicKeySignature;
     }
 
     public ByteBuffer getPublicKeySignature() {

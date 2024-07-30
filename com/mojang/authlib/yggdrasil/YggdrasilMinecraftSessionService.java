@@ -14,7 +14,6 @@ import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
 import com.mojang.authlib.minecraft.InsecurePublicKeyException;
-import com.mojang.authlib.minecraft.InsecureTextureException;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.yggdrasil.request.JoinMinecraftServerRequest;
@@ -107,28 +106,18 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     }
 
     @Override
-    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(final GameProfile profile, final boolean requireSecure) {
+    public Map<MinecraftProfileTexture.Type, MinecraftProfileTexture> getTextures(final GameProfile profile, final boolean requireSecure) throws InsecurePublicKeyException {
         final Property textureProperty = Iterables.getFirst(profile.getProperties().get("textures"), null);
 
         if (textureProperty == null) {
             return new HashMap<>();
         }
 
-        if (requireSecure) {
-            if (!textureProperty.hasSignature()) {
-                LOGGER.error("Signature is missing from textures payload");
-                throw new InsecureTextureException("Signature is missing from textures payload");
-            }
-
-            if (!getAuthenticationService().getServicesKey().validateProperty(textureProperty)) {
-                LOGGER.error("Textures payload has been tampered with (signature invalid)");
-                throw new InsecureTextureException("Textures payload has been tampered with (signature invalid)");
-            }
-        }
+        final String value = requireSecure ? getSecurePropertyValue(textureProperty) : textureProperty.getValue();
 
         final MinecraftTexturesPayload result;
         try {
-            final String json = new String(Base64.getDecoder().decode(textureProperty.getValue()), StandardCharsets.UTF_8);
+            final String json = new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
             result = gson.fromJson(json, MinecraftTexturesPayload.class);
         } catch (final JsonParseException e) {
             LOGGER.error("Could not decode textures payload", e);
@@ -170,7 +159,8 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             throw new InsecurePublicKeyException.MissingException();
         }
 
-        if (!getAuthenticationService().getServicesKey().validateProperty(property)) {
+        final ServicesKeySet servicesKeySet = getAuthenticationService().getServicesKeySet();
+        if (servicesKeySet.keys(ServicesKeyType.PROFILE_PROPERTY).stream().noneMatch(key -> key.validateProperty(property))) {
             LOGGER.error("Property {} has been tampered with (signature invalid)", property.getName());
             throw new InsecurePublicKeyException.InvalidException("Property has been tampered with (signature invalid)");
         }

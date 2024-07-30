@@ -3,8 +3,11 @@ package com.mojang.authlib.minecraft.client;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.MinecraftClientException;
 import com.mojang.authlib.exceptions.MinecraftClientException.ErrorType;
+import com.mojang.authlib.properties.PropertyMap;
+import com.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse;
 import com.mojang.util.ByteBufferTypeAdapter;
 import com.mojang.util.InstantTypeAdapter;
 import com.mojang.util.UUIDTypeAdapter;
@@ -43,6 +46,10 @@ public class ObjectMapper {
                 .registerTypeAdapter(UUID.class, new UUIDTypeAdapter())
                 .registerTypeAdapter(Instant.class, new InstantTypeAdapter())
                 .registerTypeHierarchyAdapter(ByteBuffer.class, new ByteBufferTypeAdapter().nullSafe())
+                .registerTypeAdapter(GameProfile.class, new GameProfile.Serializer())
+                .registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer())
+                .registerTypeAdapter(UUID.class, new UUIDTypeAdapter())
+                .registerTypeAdapter(ProfileSearchResultsResponse.class, new ProfileSearchResultsResponse.Serializer())
                 .create());
     }
 }

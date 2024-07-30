@@ -1,18 +1,8 @@
 package com.mojang.authlib.yggdrasil;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 import com.mojang.authlib.Agent;
 import com.mojang.authlib.Environment;
 import com.mojang.authlib.EnvironmentParser;
-import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.UserAuthentication;
@@ -20,24 +10,22 @@ import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.exceptions.InsufficientPrivilegesException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
+import com.mojang.authlib.exceptions.MinecraftClientException;
 import com.mojang.authlib.exceptions.UserBannedException;
 import com.mojang.authlib.exceptions.UserMigratedException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.minecraft.UserApiService;
-import com.mojang.authlib.properties.PropertyMap;
-import com.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse;
+import com.mojang.authlib.minecraft.client.ObjectMapper;
 import com.mojang.authlib.yggdrasil.response.Response;
-import com.mojang.util.UUIDTypeAdapter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.Proxy;
 import java.net.URL;
-import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class YggdrasilAuthenticationService extends HttpAuthenticationService {
 
@@ -45,9 +33,9 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
 
     @Nullable
     private final String clientToken;
-    private final Gson gson;
+    private final ObjectMapper objectMapper = ObjectMapper.create();
     private final Environment environment;
-    private final ServicesKeyInfo servicesKey = YggdrasilServicesKeyInfo.createFromResources();
+    private final ServicesKeySet servicesKeySet;
 
     public YggdrasilAuthenticationService(final Proxy proxy) {
         this(proxy, determineEnvironment());
@@ -65,13 +53,10 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         super(proxy);
         this.clientToken = clientToken;
         this.environment = environment;
-        final GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(GameProfile.class, new GameProfileSerializer());
-        builder.registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer());
-        builder.registerTypeAdapter(UUID.class, new UUIDTypeAdapter());
-        builder.registerTypeAdapter(ProfileSearchResultsResponse.class, new ProfileSearchResultsResponse.Serializer());
-        gson = builder.create();
         LOGGER.info("Environment: " + environment.asString());
+
+        final URL publicKeySetUrl = HttpAuthenticationService.constantURL(environment.getServicesHost() + "/publickeys");
+        servicesKeySet = YggdrasilServicesKeyInfo.get(publicKeySetUrl, this);
     }
 
     private static Environment determineEnvironment() {
@@ -98,8 +83,8 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         return new YggdrasilGameProfileRepository(this, environment);
     }
 
-    public ServicesKeyInfo getServicesKey() {
-        return servicesKey;
+    public ServicesKeySet getServicesKeySet() {
+        return servicesKeySet;
     }
 
     protected <T extends Response> T makeRequest(final URL url, final Object input, final Class<T> classOfT) throws AuthenticationException {
@@ -108,8 +93,8 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
 
     protected <T extends Response> T makeRequest(final URL url, final Object input, final Class<T> classOfT, @Nullable final String authentication) throws AuthenticationException {
         try {
-            final String jsonResult = input == null ? performGetRequest(url, authentication) : performPostRequest(url, gson.toJson(input), "application/json");
-            final T result = gson.fromJson(jsonResult, classOfT);
+            final String jsonResult = input == null ? performGetRequest(url, authentication) : performPostRequest(url, objectMapper.writeValueAsString(input), "application/json");
+            final T result = objectMapper.readValue(jsonResult, classOfT);
 
             if (result == null) {
                 return null;
@@ -130,30 +115,8 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
             }
 
             return result;
-        } catch (final IOException | IllegalStateException | JsonParseException e) {
+        } catch (final IOException | IllegalStateException | MinecraftClientException e) {
             throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
-        }
-    }
-
-    private static class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
-        @Override
-        public GameProfile deserialize(final JsonElement json, final Type typeOfT, final JsonDeserializationContext context) throws JsonParseException {
-            final JsonObject object = (JsonObject) json;
-            final UUID id = object.has("id") ? context.deserialize(object.get("id"), UUID.class) : null;
-            final String name = object.has("name") ? object.getAsJsonPrimitive("name").getAsString() : null;
-            return new GameProfile(id, name);
-        }
-
-        @Override
-        public JsonElement serialize(final GameProfile src, final Type typeOfSrc, final JsonSerializationContext context) {
-            final JsonObject result = new JsonObject();
-            if (src.getId() != null) {
-                result.add("id", context.serialize(src.getId()));
-            }
-            if (src.getName() != null) {
-                result.addProperty("name", src.getName());
-            }
-            return result;
         }
     }
 
