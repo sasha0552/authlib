@@ -11,7 +11,7 @@ public record AbuseReportLimits(
             1000,
             4,
             40,
-            7,
-            2
+            9,
+            0
     );
 }
