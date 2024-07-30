@@ -4,7 +4,6 @@ import com.mojang.authlib.Environment;
 import com.mojang.authlib.EnvironmentParser;
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.HttpAuthenticationService;
-import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.minecraft.UserApiService;
 import com.mojang.authlib.minecraft.client.MinecraftClient;
@@ -51,7 +50,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         return new YggdrasilGameProfileRepository(getProxy(), environment);
     }
 
-    public UserApiService createUserApiService(final String accessToken) throws AuthenticationException {
+    public UserApiService createUserApiService(final String accessToken) {
         return new YggdrasilUserApiService(accessToken, getProxy(), environment);
     }
 

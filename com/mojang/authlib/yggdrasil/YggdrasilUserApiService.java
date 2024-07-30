@@ -36,33 +36,23 @@ public class YggdrasilUserApiService implements UserApiService {
 
     private final MinecraftClient minecraftClient;
     private final Environment environment;
-    private UserProperties properties = OFFLINE_PROPERTIES;
     @Nullable
     private Instant nextAcceptableBlockRequest;
 
     @Nullable
     private Set<UUID> blockList;
 
-    public YggdrasilUserApiService(final String accessToken, final Proxy proxy, final Environment env) throws AuthenticationException {
+    public YggdrasilUserApiService(final String accessToken, final Proxy proxy, final Environment env) {
         this.minecraftClient = new MinecraftClient(accessToken, proxy);
         environment = env;
         routePrivileges = HttpAuthenticationService.constantURL(env.servicesHost() + "/player/attributes");
         routeBlocklist = HttpAuthenticationService.constantURL(env.servicesHost() + "/privacy/blocklist");
         routeKeyPair = HttpAuthenticationService.constantURL(env.servicesHost() + "/player/certificates");
         routeAbuseReport = HttpAuthenticationService.constantURL(env.servicesHost() + "/player/report");
-        fetchProperties();
-    }
-
-    @Override
-    public UserProperties properties() {
-        return properties;
     }
 
     @Override
     public TelemetrySession newTelemetrySession(final Executor executor) {
-        if (!properties.flag(UserFlag.TELEMETRY_ENABLED)) {
-            return TelemetrySession.DISABLED;
-        }
         return new YggdrassilTelemetrySession(minecraftClient, environment, executor);
     }
 
@@ -125,7 +115,8 @@ public class YggdrasilUserApiService implements UserApiService {
         }
     }
 
-    private void fetchProperties() throws AuthenticationException {
+    @Override
+    public UserProperties fetchProperties() throws AuthenticationException {
         try {
             final UserAttributesResponse response = minecraftClient.get(routePrivileges, UserAttributesResponse.class);
             final ImmutableSet.Builder<UserFlag> flags = ImmutableSet.builder();
@@ -153,7 +144,7 @@ public class YggdrasilUserApiService implements UserApiService {
                 }
             }
 
-            properties = new UserProperties(flags.build(), bannedScopes.build());
+            return new UserProperties(flags.build(), bannedScopes.build());
         } catch (final MinecraftClientHttpException e) {
             //TODO: Handle when status is 401 (Unauthorized) -> Refresh token/login again.
             throw e.toAuthenticationException();

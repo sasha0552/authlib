@@ -21,11 +21,13 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class YggdrasilServicesKeyInfo implements ServicesKeyInfo {
@@ -43,6 +45,8 @@ public class YggdrasilServicesKeyInfo implements ServicesKeyInfo {
     private static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
 
     private static final int REFRESH_INTERVAL_HOURS = 24;
+    private static final int BASE_FAILURE_INTERVAL_MINUTES = 5;
+    private static final int MAX_BACKOFF_EXPONENT = 6;
 
     private final PublicKey publicKey;
 
@@ -76,15 +80,31 @@ public class YggdrasilServicesKeyInfo implements ServicesKeyInfo {
 
     public static ServicesKeySet get(final URL url, final MinecraftClient client) {
         final CompletableFuture<?> ready = new CompletableFuture<>();
-        final AtomicReference<ServicesKeySet> keySet = new AtomicReference<>(ServicesKeySet.EMPTY);
-        FETCHER_EXECUTOR.scheduleAtFixedRate(() -> {
-            fetch(url, client).ifPresent(keySet::set);
-            ready.complete(null);
-        }, 0, REFRESH_INTERVAL_HOURS, TimeUnit.HOURS);
+        final AtomicReference<ServicesKeySet> keySet = new AtomicReference<>();
+        FETCHER_EXECUTOR.execute(new Runnable() {
+            private final AtomicInteger failureCount = new AtomicInteger();
+
+            @Override
+            public void run() {
+                fetch(url, client).ifPresent(keySet::set);
+                ready.complete(null);
+                reschedule();
+            }
+
+            private void reschedule() {
+                if (keySet.get() == null) {
+                    final int backoffExponent = Math.min(failureCount.getAndIncrement(), MAX_BACKOFF_EXPONENT);
+                    final int delayMinutes = BASE_FAILURE_INTERVAL_MINUTES * (1 << backoffExponent);
+                    FETCHER_EXECUTOR.schedule(this, delayMinutes, TimeUnit.MINUTES);
+                    return;
+                }
+                FETCHER_EXECUTOR.schedule(this, REFRESH_INTERVAL_HOURS, TimeUnit.HOURS);
+            }
+        });
 
         return ServicesKeySet.lazy(() -> {
             ready.join();
-            return keySet.get();
+            return Objects.requireNonNullElse(keySet.get(), ServicesKeySet.EMPTY);
         });
     }
 

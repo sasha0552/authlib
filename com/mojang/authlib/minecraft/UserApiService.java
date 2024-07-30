@@ -1,5 +1,6 @@
 package com.mojang.authlib.minecraft;
 
+import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.minecraft.report.AbuseReportLimits;
 import com.mojang.authlib.yggdrasil.request.AbuseReportRequest;
 import com.mojang.authlib.yggdrasil.response.KeyPairResponse;
@@ -49,7 +50,7 @@ public interface UserApiService {
 
     UserApiService OFFLINE = new UserApiService() {
         @Override
-        public UserProperties properties() {
+        public UserProperties fetchProperties() {
             return OFFLINE_PROPERTIES;
         }
 
@@ -88,7 +89,7 @@ public interface UserApiService {
         }
     };
 
-    UserProperties properties();
+    UserProperties fetchProperties() throws AuthenticationException;
 
     /**
      * Check if a player is on the block list.
