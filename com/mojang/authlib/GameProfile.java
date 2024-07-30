@@ -1,15 +1,13 @@
 package com.mojang.authlib;
 
-import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.UUID;
 
 public class GameProfile {
-    private final String id;
+    private final UUID id;
     private final String name;
     private final PropertyMap properties = new PropertyMap();
     private boolean legacy;
@@ -23,8 +21,8 @@ public class GameProfile {
      * @param name Display name of the profile
      * @throws java.lang.IllegalArgumentException Both ID and name are either null or empty
      */
-    public GameProfile(String id, String name) {
-        if (StringUtils.isBlank(id) && StringUtils.isBlank(name)) throw new IllegalArgumentException("Name and ID cannot both be blank");
+    public GameProfile(UUID id, String name) {
+        if (id == null && StringUtils.isBlank(name)) throw new IllegalArgumentException("Name and ID cannot both be blank");
 
         this.id = id;
         this.name = name;
@@ -37,7 +35,7 @@ public class GameProfile {
      *
      * @return ID of the profile
      */
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
@@ -69,7 +67,7 @@ public class GameProfile {
      * @return True if this profile is complete (as opposed to partial)
      */
     public boolean isComplete() {
-        return StringUtils.isNotBlank(getId()) && StringUtils.isNotBlank(getName());
+        return id != null && StringUtils.isNotBlank(getName());
     }
 
     @Override

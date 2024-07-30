@@ -2,19 +2,21 @@ package com.mojang.authlib.yggdrasil;
 
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
-import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.minecraft.HttpMinecraftSessionService;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
+import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.yggdrasil.request.JoinMinecraftServerRequest;
 import com.mojang.authlib.yggdrasil.response.HasJoinedMinecraftServerResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftProfilePropertiesResponse;
 import com.mojang.authlib.yggdrasil.response.MinecraftTexturesPayload;
 import com.mojang.authlib.yggdrasil.response.Response;
+import com.mojang.util.UUIDTypeAdapter;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
@@ -25,10 +27,7 @@ import java.net.URL;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionService {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -37,7 +36,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
     private static final URL CHECK_URL = HttpAuthenticationService.constantURL(BASE_URL + "hasJoined");
 
     private final PublicKey publicKey;
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
 
     protected YggdrasilMinecraftSessionService(YggdrasilAuthenticationService authenticationService) {
         super(authenticationService);
@@ -146,19 +145,24 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
     @Override
     public GameProfile fillProfileProperties(GameProfile profile) {
-        if (profile.getId() == null || profile.getId().length() == 0) {
+        if (profile.getId() == null) {
             return profile;
         }
 
         try {
-            URL url = HttpAuthenticationService.constantURL(BASE_URL + "profile/" + profile.getId());
+            URL url = HttpAuthenticationService.constantURL(BASE_URL + "profile/" + UUIDTypeAdapter.fromUUID(profile.getId()));
             MinecraftProfilePropertiesResponse response = getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
-            LOGGER.debug("Successfully fetched profile properties for " + profile);
 
-            GameProfile result = new GameProfile(response.getId(), response.getName());
-            result.getProperties().putAll(response.getProperties());
-            profile.getProperties().putAll(response.getProperties());
-            return result;
+            if (response == null) {
+                LOGGER.debug("Couldn't fetch profile properties for " + profile + " as the profile does not exist");
+                return profile;
+            } else {
+                LOGGER.debug("Successfully fetched profile properties for " + profile);
+                GameProfile result = new GameProfile(response.getId(), response.getName());
+                result.getProperties().putAll(response.getProperties());
+                profile.getProperties().putAll(response.getProperties());
+                return result;
+            }
         } catch (AuthenticationException e) {
             LOGGER.warn("Couldn't look up profile properties for " + profile, e);
             return profile;

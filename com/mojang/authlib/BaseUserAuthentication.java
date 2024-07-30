@@ -1,15 +1,17 @@
 package com.mojang.authlib;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.mojang.authlib.properties.Property;
 import com.mojang.authlib.properties.PropertyMap;
+import com.mojang.util.UUIDTypeAdapter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class BaseUserAuthentication implements UserAuthentication {
     private static final Logger LOGGER = LogManager.getLogger();
@@ -113,7 +115,7 @@ public abstract class BaseUserAuthentication implements UserAuthentication {
         }
 
         if (credentials.containsKey(STORAGE_KEY_PROFILE_NAME) && credentials.containsKey(STORAGE_KEY_PROFILE_ID)) {
-            GameProfile profile = new GameProfile(String.valueOf(credentials.get(STORAGE_KEY_PROFILE_ID)), String.valueOf(credentials.get(STORAGE_KEY_PROFILE_NAME)));
+            GameProfile profile = new GameProfile(UUIDTypeAdapter.fromString(String.valueOf(credentials.get(STORAGE_KEY_PROFILE_ID))), String.valueOf(credentials.get(STORAGE_KEY_PROFILE_NAME)));
             if (credentials.containsKey(STORAGE_KEY_PROFILE_PROPERTIES)) {
                 try {
                     List<Map<String, String>> list = (List<Map<String, String>>) credentials.get(STORAGE_KEY_PROFILE_PROPERTIES);

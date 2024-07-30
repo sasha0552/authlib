@@ -9,12 +9,14 @@ import com.mojang.authlib.exceptions.UserMigratedException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.Response;
+import com.mojang.util.UUIDTypeAdapter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.UUID;
 
 public class YggdrasilAuthenticationService extends HttpAuthenticationService {
     private final String clientToken;
@@ -26,6 +28,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(GameProfile.class, new GameProfileSerializer());
         builder.registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer());
+        builder.registerTypeAdapter(UUID.class, new UUIDTypeAdapter());
         gson = builder.create();
     }
 
@@ -79,7 +82,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         @Override
         public GameProfile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject object = (JsonObject) json;
-            String id = object.has("id") ? object.getAsJsonPrimitive("id").getAsString() : null;
+            UUID id = object.has("id") ? context.<UUID>deserialize(object.get("id"), UUID.class) : null;
             String name = object.has("name") ? object.getAsJsonPrimitive("name").getAsString() : null;
             return new GameProfile(id, name);
         }
@@ -87,7 +90,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
         @Override
         public JsonElement serialize(GameProfile src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject result = new JsonObject();
-            if (src.getId() != null) result.addProperty("id", src.getId());
+            if (src.getId() != null) result.add("id", context.serialize(src.getId()));
             if (src.getName() != null) result.addProperty("name", src.getName());
             return result;
         }
