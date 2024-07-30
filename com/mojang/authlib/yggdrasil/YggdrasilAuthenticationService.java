@@ -10,6 +10,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.Environment;
+import com.mojang.authlib.EnvironmentParser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.HttpAuthenticationService;
@@ -23,42 +25,59 @@ import com.mojang.authlib.properties.PropertyMap;
 import com.mojang.authlib.yggdrasil.response.ProfileSearchResultsResponse;
 import com.mojang.authlib.yggdrasil.response.Response;
 import com.mojang.util.UUIDTypeAdapter;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class YggdrasilAuthenticationService extends HttpAuthenticationService {
+
+    private static final Logger LOGGER = LogManager.getLogger();
+
     private final String clientToken;
     private final Gson gson;
+    private final Environment environment;
 
     public YggdrasilAuthenticationService(final Proxy proxy, final String clientToken) {
+        this(proxy, clientToken, determineEnvironment());
+    }
+
+    public YggdrasilAuthenticationService(final Proxy proxy, final String clientToken, Environment environment) {
         super(proxy);
         this.clientToken = clientToken;
+        this.environment = environment;
         final GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(GameProfile.class, new GameProfileSerializer());
         builder.registerTypeAdapter(PropertyMap.class, new PropertyMap.Serializer());
         builder.registerTypeAdapter(UUID.class, new UUIDTypeAdapter());
         builder.registerTypeAdapter(ProfileSearchResultsResponse.class, new ProfileSearchResultsResponse.Serializer());
         gson = builder.create();
+        LOGGER.info("Environment: " + environment.asString());
+    }
+
+    private static Environment determineEnvironment() {
+        return EnvironmentParser
+                   .getEnvironmentFromProperties()
+                   .orElse(YggdrasilEnvironment.PROD);
     }
 
     @Override
     public UserAuthentication createUserAuthentication(final Agent agent) {
-        return new YggdrasilUserAuthentication(this, agent);
+        return new YggdrasilUserAuthentication(this, agent, environment);
     }
 
     @Override
     public MinecraftSessionService createMinecraftSessionService() {
-        return new YggdrasilMinecraftSessionService(this);
+        return new YggdrasilMinecraftSessionService(this, environment);
     }
 
     @Override
     public GameProfileRepository createProfileRepository() {
-        return new YggdrasilGameProfileRepository(this);
+        return new YggdrasilGameProfileRepository(this, environment);
     }
 
     protected <T extends Response> T makeRequest(final URL url, final Object input, final Class<T> classOfT) throws AuthenticationException {
@@ -81,11 +100,7 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
             }
 
             return result;
-        } catch (final IOException e) {
-            throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
-        } catch (final IllegalStateException e) {
-            throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
-        } catch (final JsonParseException e) {
+        } catch (final IOException | IllegalStateException | JsonParseException e) {
             throw new AuthenticationUnavailableException("Cannot contact authentication server", e);
         }
     }

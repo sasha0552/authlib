@@ -7,6 +7,7 @@ import org.apache.commons.lang3.Validate;
 
 import java.net.Proxy;
 
+@Deprecated
 public class LegacyAuthenticationService extends HttpAuthenticationService {
     /**
      * Constructs a new AuthenticationService using the legacy service.

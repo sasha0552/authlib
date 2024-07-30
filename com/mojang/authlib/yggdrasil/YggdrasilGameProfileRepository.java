@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.Environment;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.authlib.HttpAuthenticationService;
@@ -18,8 +19,7 @@ import java.util.Set;
 
 public class YggdrasilGameProfileRepository implements GameProfileRepository {
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final String BASE_URL = "https://api.mojang.com/";
-    private static final String SEARCH_PAGE_URL = BASE_URL + "profiles/";
+    private final String searchPageUrl;
     private static final int ENTRIES_PER_PAGE = 2;
     private static final int MAX_FAIL_COUNT = 3;
     private static final int DELAY_BETWEEN_PAGES = 100;
@@ -27,8 +27,9 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
 
     private final YggdrasilAuthenticationService authenticationService;
 
-    public YggdrasilGameProfileRepository(final YggdrasilAuthenticationService authenticationService) {
+    public YggdrasilGameProfileRepository(final YggdrasilAuthenticationService authenticationService, final Environment environment) {
         this.authenticationService = authenticationService;
+        searchPageUrl = environment.getAccountsHost() + "/profiles/";
     }
 
     @Override
@@ -51,7 +52,7 @@ public class YggdrasilGameProfileRepository implements GameProfileRepository {
                 failed = false;
 
                 try {
-                    final ProfileSearchResultsResponse response = authenticationService.makeRequest(HttpAuthenticationService.constantURL(SEARCH_PAGE_URL + agent.getName().toLowerCase()), request, ProfileSearchResultsResponse.class);
+                    final ProfileSearchResultsResponse response = authenticationService.makeRequest(HttpAuthenticationService.constantURL(searchPageUrl + agent.getName().toLowerCase()), request, ProfileSearchResultsResponse.class);
                     failCount = 0;
 
                     LOGGER.debug("Page {} returned {} results, parsing", page, response.getProfiles().length);

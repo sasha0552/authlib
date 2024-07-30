@@ -7,6 +7,7 @@ import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.mojang.authlib.Environment;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.HttpAuthenticationService;
 import com.mojang.authlib.exceptions.AuthenticationException;
@@ -45,9 +46,9 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         ".mojang.com"
     };
     private static final Logger LOGGER = LogManager.getLogger();
-    private static final String BASE_URL = "https://sessionserver.mojang.com/session/minecraft/";
-    private static final URL JOIN_URL = HttpAuthenticationService.constantURL(BASE_URL + "join");
-    private static final URL CHECK_URL = HttpAuthenticationService.constantURL(BASE_URL + "hasJoined");
+    private final String baseUrl;
+    private final URL joinUrl;
+    private final URL checkUrl;
 
     private final PublicKey publicKey;
     private final Gson gson = new GsonBuilder().registerTypeAdapter(UUID.class, new UUIDTypeAdapter()).create();
@@ -61,8 +62,13 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             }
         });
 
-    protected YggdrasilMinecraftSessionService(final YggdrasilAuthenticationService authenticationService) {
-        super(authenticationService);
+    protected YggdrasilMinecraftSessionService(final YggdrasilAuthenticationService service, final Environment env) {
+        super(service);
+
+        baseUrl = env.getSessionHost() + "/session/minecraft/";
+
+        joinUrl = HttpAuthenticationService.constantURL(baseUrl + "join");
+        checkUrl = HttpAuthenticationService.constantURL(baseUrl + "hasJoined");
 
         try {
             final X509EncodedKeySpec spec = new X509EncodedKeySpec(IOUtils.toByteArray(YggdrasilMinecraftSessionService.class.getResourceAsStream("/yggdrasil_session_pubkey.der")));
@@ -80,7 +86,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
         request.selectedProfile = profile.getId();
         request.serverId = serverId;
 
-        getAuthenticationService().makeRequest(JOIN_URL, request, Response.class);
+        getAuthenticationService().makeRequest(joinUrl, request, Response.class);
     }
 
     @Override
@@ -94,7 +100,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
             arguments.put("ip", address.getHostAddress());
         }
 
-        final URL url = HttpAuthenticationService.concatenateURL(CHECK_URL, HttpAuthenticationService.buildQuery(arguments));
+        final URL url = HttpAuthenticationService.concatenateURL(checkUrl, HttpAuthenticationService.buildQuery(arguments));
 
         try {
             final HasJoinedMinecraftServerResponse response = getAuthenticationService().makeRequest(url, null, HasJoinedMinecraftServerResponse.class);
@@ -175,7 +181,7 @@ public class YggdrasilMinecraftSessionService extends HttpMinecraftSessionServic
 
     protected GameProfile fillGameProfile(final GameProfile profile, final boolean requireSecure) {
         try {
-            URL url = HttpAuthenticationService.constantURL(BASE_URL + "profile/" + UUIDTypeAdapter.fromUUID(profile.getId()));
+            URL url = HttpAuthenticationService.constantURL(baseUrl + "profile/" + UUIDTypeAdapter.fromUUID(profile.getId()));
             url = HttpAuthenticationService.concatenateURL(url, "unsigned=" + !requireSecure);
             final MinecraftProfilePropertiesResponse response = getAuthenticationService().makeRequest(url, null, MinecraftProfilePropertiesResponse.class);
 

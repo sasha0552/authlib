@@ -16,6 +16,7 @@ import static com.mojang.authlib.HttpAuthenticationService.buildQuery;
 import static com.mojang.authlib.HttpAuthenticationService.concatenateURL;
 import static com.mojang.authlib.HttpAuthenticationService.constantURL;
 
+@Deprecated
 public class LegacyMinecraftSessionService extends HttpMinecraftSessionService {
     private static final String BASE_URL = "http://session.minecraft.net/game/";
     private static final URL JOIN_URL = constantURL(BASE_URL + "joinserver.jsp");

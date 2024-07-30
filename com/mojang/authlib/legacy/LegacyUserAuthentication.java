@@ -14,6 +14,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public class LegacyUserAuthentication extends HttpUserAuthentication {
     private static final URL AUTHENTICATION_URL = HttpAuthenticationService.constantURL("https://login.minecraft.net");
     private static final int AUTHENTICATION_VERSION = 14;
