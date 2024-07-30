@@ -20,6 +20,7 @@ import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.exceptions.InsufficientPrivilegesException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
+import com.mojang.authlib.exceptions.UserBannedException;
 import com.mojang.authlib.exceptions.UserMigratedException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
 import com.mojang.authlib.minecraft.UserApiService;
@@ -121,6 +122,8 @@ public class YggdrasilAuthenticationService extends HttpAuthenticationService {
                     throw new InvalidCredentialsException(result.getErrorMessage());
                 } else if ("InsufficientPrivilegesException".equals(result.getError())) {
                     throw new InsufficientPrivilegesException(result.getErrorMessage());
+                } else if ("multiplayer.access.banned".equals(result.getError())) {
+                    throw new UserBannedException();
                 } else {
                     throw new AuthenticationException(result.getErrorMessage());
                 }
